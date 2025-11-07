@@ -29,18 +29,17 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default  // ← AGREGADO
     private UserRole role = UserRole.USER;
 
-    public User(UserRole role) {
-        this.role = role;
-    }
-
     @Column(nullable = false)
+    @Builder.Default  // ← AGREGADO
     private Boolean isActive = true;
 
-
+    @Builder.Default  // ← AGREGADO
     private String preferredTheme = "light";
 
     @Column(nullable = false, updatable = false)
+    @Builder.Default  // ← AGREGADO
     private LocalDateTime createdAt = LocalDateTime.now();
 }
