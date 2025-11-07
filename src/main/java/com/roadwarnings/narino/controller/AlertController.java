@@ -6,9 +6,10 @@ import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.service.AlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.List;
 @RequestMapping("/alerts")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-public class AlertaController {
+public class AlertController {
 
     private final AlertService alertService;
 
@@ -25,7 +26,7 @@ public class AlertaController {
     public ResponseEntity<AlertaResponseDTO> createAlert(
             @Valid @RequestBody AlertaRequestDTO request,
             Authentication authentication) {
-        String username = authentication.getName();
+        String username = authentication.name();
         AlertaResponseDTO response = alertService.createAlert(request, username);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -62,7 +63,7 @@ public class AlertaController {
             @PathVariable Long id,
             @Valid @RequestBody AlertaRequestDTO request,
             Authentication authentication) {
-        String username = authentication.getName();
+        String username = authentication.name();
         AlertaResponseDTO response = alertService.updateAlert(id, request, username);
         return ResponseEntity.ok(response);
     }
@@ -71,7 +72,7 @@ public class AlertaController {
     public ResponseEntity<Void> deleteAlert(
             @PathVariable Long id,
             Authentication authentication) {
-        String username = authentication.getName();
+        String username = authentication.name();
         alertService.deleteAlert(id, username);
         return ResponseEntity.noContent().build();
     }
