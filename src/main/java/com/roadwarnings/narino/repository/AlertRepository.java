@@ -13,21 +13,20 @@ import java.util.List;
 
 @Repository
 public interface AlertRepository extends JpaRepository<Alert, Long> {
-    
-    List<Alert> findByStatus(AlertStatus status);
-    
-    List<Alert> findByType(AlertType type);
-    
-    List<Alert> findByUserId(Long userId);
-    
-    @Query("SELECT a FROM Alert a WHERE a.status = :status AND a.createdAt > :since ORDER BY a.createdAt DESC")
-    List<Alert> findRecentAlerts(@Param("status") AlertStatus status, @Param("since") LocalDateTime since);
-    
-    @Query("SELECT a FROM Alert a WHERE a.status = 'ACTIVE' " +
-           "AND (6371 * acos(cos(radians(:lat)) * cos(radians(a.latitude)) * " +
-           "cos(radians(a.longitude) - radians(:lon)) + sin(radians(:lat)) * " +
-           "sin(radians(a.latitude)))) < :radius ORDER BY a.createdAt DESC")
-    List<Alert> findNearbyAlerts(@Param("lat") Double latitude, 
-                                  @Param("lon") Double longitude, 
+
+List<Alert> findByStatus(AlertStatus status);
+
+List<Alert> findByType(AlertType type);
+
+List<Alert> findByUserId(Long userId);
+
+@Query("SELECT a FROM Alert a WHERE a.status = :status AND a.createdAt > :since ORDER BY a.createdAt DESC")
+List<Alert> findRecentAlerts(@Param("status") AlertStatus status, @Param("since") LocalDateTime since);
+@Query("SELECT a FROM Alert a WHERE a.status = 'ACTIVE' " +
+       "AND (6371 * acos(cos(radians(:lat)) * cos(radians(a.latitude)) * " +
+       "cos(radians(a.longitude) - radians(:lon)) + sin(radians(:lat)) * " +
+       "sin(radians(a.latitude)))) < :radius ORDER BY a.createdAt DESC")
+       List<Alert> findNearbyAlerts(@Param("lat") Double latitude,
+                                  @Param("lon") Double longitude,
                                   @Param("radius") Double radiusKm);
 }
