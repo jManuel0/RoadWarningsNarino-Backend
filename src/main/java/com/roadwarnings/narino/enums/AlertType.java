@@ -1,0 +1,20 @@
+package com.roadwarnings.narino.enums;
+
+public enum AlertType {
+    DERRUMBE,
+    PROTESTA,
+    ACCIDENTE,
+    TRAFICO_PESADO,
+    VIA_CERRADA,
+    POLICIA,
+    TRANSITO,
+    EJERCITO,
+    SEMAFORO_DANADO,
+    OBRAS_VIALES,
+    INUNDACION,
+    NEBLINA,
+    VEHICULO_VARADO,
+    ANIMALES_EN_VIA,
+    GASOLINA,
+    OTROS
+}
