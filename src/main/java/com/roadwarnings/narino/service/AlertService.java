@@ -5,6 +5,7 @@ import com.roadwarnings.narino.dto.response.AlertaResponseDTO;
 import com.roadwarnings.narino.entity.Alert;
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.enums.AlertStatus;
+import com.roadwarnings.narino.exception.UnauthorizedException;
 import com.roadwarnings.narino.repository.AlertRepository;
 import com.roadwarnings.narino.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,15 +23,15 @@ public class AlertService {
 
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
-    
+
     private static final String ALERT_NOT_FOUND = "Alerta no encontrada";
     private static final String USER_NOT_FOUND = "Usuario no encontrado";
 
     public AlertaResponseDTO createAlert(AlertaRequestDTO request, String username) {
         log.info("Creando alerta: {} por usuario: {}", request.getTitle(), username);
-        
+
         User user = userRepository.findByUsername(username)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
         Alert alert = Alert.builder()
                 .type(request.getType())
@@ -46,38 +46,41 @@ public class AlertService {
 
         alert = alertRepository.save(alert);
         log.info("Alerta creada con ID: {}", alert.getId());
-        
+
         return mapToResponseDTO(alert);
     }
 
     public List<AlertaResponseDTO> getAllAlerts() {
         return alertRepository.findAll().stream()
                 .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<AlertaResponseDTO> getActiveAlerts() {
         return alertRepository.findByStatus(AlertStatus.ACTIVE).stream()
                 .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public AlertaResponseDTO getAlertById(Long id) {
         Alert alert = alertRepository.findById(id)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
         return mapToResponseDTO(alert);
     }
 
     public List<AlertaResponseDTO> getNearbyAlerts(Double latitude, Double longitude, Double radius) {
         return alertRepository.findAll().stream()
-                .filter(alert -> calculateDistance(latitude, longitude, alert.getLatitude(), alert.getLongitude()) <= radius)
+                .filter(alert -> calculateDistance(
+                        latitude, longitude,
+                        alert.getLatitude(), alert.getLongitude()
+                ) <= radius)
                 .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public AlertaResponseDTO updateAlert(Long id, AlertaRequestDTO request, String username) {
         Alert alert = alertRepository.findById(id)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
 
         if (!alert.getUser().getUsername().equals(username)) {
             throw new UnauthorizedException("No tienes permiso para actualizar esta alerta");
@@ -97,7 +100,7 @@ public class AlertService {
 
     public void deleteAlert(Long id, String username) {
         Alert alert = alertRepository.findById(id)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
 
         if (!alert.getUser().getUsername().equals(username)) {
             throw new UnauthorizedException("No tienes permiso para eliminar esta alerta");
@@ -108,11 +111,11 @@ public class AlertService {
 
     public AlertaResponseDTO updateAlertStatus(Long id, AlertStatus status) {
         Alert alert = alertRepository.findById(id)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
 
         alert.setStatus(status);
         alert = alertRepository.save(alert);
-        
+
         return mapToResponseDTO(alert);
     }
 
@@ -143,13 +146,13 @@ public class AlertService {
 
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
-        
+
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        
+
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
+
         return EARTH_RADIUS * c;
     }
 }
