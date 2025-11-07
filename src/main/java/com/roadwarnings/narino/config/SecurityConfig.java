@@ -18,15 +18,23 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/public/**", "/h2-console/**", "/swagger-ui/**", "/api-docs/**").permitAll()
-                .requestMatchers("/api/alerts/**").permitAll() // Temporalmente público para desarrollo
+                // Rutas públicas - NO requieren autenticación
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/alertas/**").permitAll()  // ← CAMBIADO de /alerts a /alertas
+                .requestMatchers("/api/users/**").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/api-docs/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                // Cualquier otra ruta requiere autenticación
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .headers(headers -> headers
-                .frameOptions(frame -> frame.disable())
+                .frameOptions(frame -> frame.disable())  // Para H2 Console
             );
 
         return http.build();
