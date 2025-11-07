@@ -38,9 +38,7 @@ public class User {
     @Column(nullable = false)
     private Boolean isActive = true;
 
-    /**
-     *
-     */
+
     private String preferredTheme = "light";
 
     @Column(nullable = false, updatable = false)

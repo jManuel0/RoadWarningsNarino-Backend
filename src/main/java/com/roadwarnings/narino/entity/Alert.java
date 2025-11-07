@@ -40,10 +40,12 @@ public class Alert {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default  // ← AGREGADO
     private AlertSeverity severity = AlertSeverity.MEDIUM;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default  // ← AGREGADO
     private AlertStatus status = AlertStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,12 +55,15 @@ public class Alert {
     private String imageUrl;
 
     @Column(nullable = false)
+    @Builder.Default  // ← AGREGADO
     private Integer upvotes = 0;
 
     @Column(nullable = false)
+    @Builder.Default  // ← AGREGADO
     private Integer downvotes = 0;
 
     @Column(nullable = false, updatable = false)
+    @Builder.Default  // ← AGREGADO
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt;
