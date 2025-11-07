@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/alerts")
+@RequestMapping("/alert")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AlertController {
