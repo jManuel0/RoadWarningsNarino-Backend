@@ -62,6 +62,7 @@ mvn clean install -DskipTests
 ## 📋 Archivos de Configuración Creados
 
 ### 1. `.vscode/settings.json`
+
 ```json
 {
     "java.configuration.updateBuildConfiguration": "automatic",
@@ -73,6 +74,7 @@ mvn clean install -DskipTests
 ```
 
 ### 2. `.vscode/extensions.json`
+
 ```json
 {
     "recommendations": [
@@ -85,6 +87,7 @@ mvn clean install -DskipTests
 ```
 
 ### 3. `lombok.config`
+
 ```properties
 config.stopBubbling = true
 lombok.addLombokGeneratedAnnotation = true
@@ -96,19 +99,22 @@ lombok.getter.lazy = true
 
 ## 🎯 Verificación
 
-### Verificar que Maven funciona:
+### Verificar que Maven funciona
+
 ```bash
 mvn clean compile
 # Debería mostrar: BUILD SUCCESS
 ```
 
-### Verificar que los tests pasan:
+### Verificar que los tests pasan
+
 ```bash
 mvn test
 # Debería mostrar: Tests run: 1, Failures: 0, Errors: 0
 ```
 
-### Ejecutar la aplicación:
+### Ejecutar la aplicación
+
 ```bash
 mvn spring-boot:run
 # Debería iniciar en http://localhost:8080/api
@@ -119,18 +125,21 @@ mvn spring-boot:run
 ## 🐛 Si los Problemas Persisten
 
 ### Opción 1: Verificar versión de Java
+
 ```bash
 java -version
 # Debe ser Java 21 o superior
 ```
 
 ### Opción 2: Actualizar Maven
+
 ```bash
 mvn -version
 # Debe ser Maven 3.6 o superior
 ```
 
 ### Opción 3: Usar Maven en lugar del IDE
+
 ```bash
 # Desarrollar usando comandos Maven directamente
 mvn compile  # Compilar
@@ -139,6 +148,7 @@ mvn spring-boot:run  # Ejecutar
 ```
 
 ### Opción 4: Usar IntelliJ IDEA (alternativa)
+
 IntelliJ IDEA Community Edition tiene mejor soporte para Lombok y Spring Boot que VSCode.
 
 1. Descargar IntelliJ IDEA Community
@@ -190,8 +200,9 @@ mvn spring-boot:run
 ```
 
 Luego abre:
-- API: http://localhost:8080/api/public/health
-- H2 Console: http://localhost:8080/api/h2-console
+
+- API: <http://localhost:8080/api/public/health>
+- H2 Console: <http://localhost:8080/api/h2-console>
 
 **Si esto funciona, tu proyecto está 100% operativo** independientemente de lo que diga el IDE.
 
