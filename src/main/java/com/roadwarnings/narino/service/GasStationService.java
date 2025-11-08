@@ -41,7 +41,7 @@ public class GasStationService {
                 .isOpen24Hours(request.getIsOpen24Hours() != null && request.getIsOpen24Hours())
                 .openingTime(request.getOpeningTime())
                 .closingTime(request.getClosingTime())
-                .isAvailable(!request.getIsAvailable() != null || request.getIsAvailable())
+                .isAvailable(request.getIsAvailable() != null || request.getIsAvailable())
                 .build();
 
         gasStation = gasStationRepository.save(gasStation);
