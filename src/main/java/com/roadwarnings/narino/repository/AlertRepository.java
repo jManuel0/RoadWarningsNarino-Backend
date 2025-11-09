@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
-    List<Alert> findByStatus(AlertStatus active);
+    List<Alert> findByStatus(AlertStatus status);
 
     List<Alert> findByType(AlertType type);
 
@@ -30,6 +30,4 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     List<Alert> findNearbyAlerts(@Param("lat") Double latitude,
                                   @Param("lon") Double longitude,
                                   @Param("radius") Double radiusKm);
-
-    Alert save(Alert alert);
 }
