@@ -31,9 +31,16 @@ public class AlertaRequestDTO {
     @DecimalMax(value = "180.0", message = "Longitud inválida")
     private Double longitude;
 
+    @NotBlank(message = "La dirección es obligatoria")
     private String location;
 
+    @NotBlank(message = "El municipio es obligatorio")
+    private String municipality; // 👈 nuevo campo (para seleccionar desde el formulario)
+
+    @NotNull(message = "La severidad es obligatoria")
     private AlertSeverity severity;
+
+    private Integer estimatedDuration; // 👈 nuevo campo (minutos)
 
     private String imageUrl;
 }
