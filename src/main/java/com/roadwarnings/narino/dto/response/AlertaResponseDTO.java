@@ -17,16 +17,24 @@ public class AlertaResponseDTO {
     private AlertType type;
     private String title;
     private String description;
+
     private Double latitude;
     private Double longitude;
     private String location;
+
+    private String municipality;       // 👈 nuevo campo
     private AlertSeverity severity;
     private AlertStatus status;
+
     private String username;
     private Long userId;
+
     private String imageUrl;
     private Integer upvotes;
     private Integer downvotes;
+
+    private Integer estimatedDuration; // 👈 nuevo campo (en minutos)
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime expiresAt;
