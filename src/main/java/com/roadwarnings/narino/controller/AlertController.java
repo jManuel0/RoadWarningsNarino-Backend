@@ -8,35 +8,24 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication; // 👈 IMPORT CORRECTO
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/alert") // 👈 IMPORTANTE: coincide con el frontend
+@RequestMapping("/api/alert")
 @RequiredArgsConstructor
-@CrossOrigin(
-        origins = {
-                "http://localhost:5173",          // frontend local
-                "https://TU-FRONTEND.onrender.com" // 👈 cambia esto por tu URL real en Render
-        }
-)
+@CrossOrigin(origins = "*")
 public class AlertController {
 
     private final AlertService alertService;
 
     @PostMapping
     public ResponseEntity<AlertaResponseDTO> createAlert(
-            @Valid @RequestBody AlertaRequestDTO request,
-            Authentication authentication
-    ) {
-        // Si aún no tienes login real, evitamos NPE:
-        String username = (authentication != null)
-                ? authentication.getName()
-                : "public"; // o algún usuario por defecto que exista en tu BD
+            @Valid @RequestBody AlertaRequestDTO request) {
 
-        AlertaResponseDTO response = alertService.createAlert(request, username);
+        // Sin autenticación: creamos alerta "anónima"
+        AlertaResponseDTO response = alertService.createAlert(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -62,8 +51,7 @@ public class AlertController {
     public ResponseEntity<List<AlertaResponseDTO>> getNearbyAlerts(
             @RequestParam Double latitude,
             @RequestParam Double longitude,
-            @RequestParam(defaultValue = "10.0") Double radius
-    ) {
+            @RequestParam(defaultValue = "10.0") Double radius) {
         List<AlertaResponseDTO> alerts =
                 alertService.getNearbyAlerts(latitude, longitude, radius);
         return ResponseEntity.ok(alerts);
@@ -72,34 +60,23 @@ public class AlertController {
     @PutMapping("/{id}")
     public ResponseEntity<AlertaResponseDTO> updateAlert(
             @PathVariable Long id,
-            @Valid @RequestBody AlertaRequestDTO request,
-            Authentication authentication
-    ) {
-        String username = (authentication != null)
-                ? authentication.getName()
-                : "public";
-        AlertaResponseDTO response =
-                alertService.updateAlert(id, request, username);
+            @Valid @RequestBody AlertaRequestDTO request) {
+
+        AlertaResponseDTO response = alertService.updateAlert(id, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAlert(
-            @PathVariable Long id,
-            Authentication authentication
-    ) {
-        String username = (authentication != null)
-                ? authentication.getName()
-                : "public";
-        alertService.deleteAlert(id, username);
+    public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
+        alertService.deleteAlert(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<AlertaResponseDTO> updateAlertStatus(
             @PathVariable Long id,
-            @RequestParam AlertStatus status
-    ) {
+            @RequestParam AlertStatus status) {
+
         AlertaResponseDTO response = alertService.updateAlertStatus(id, status);
         return ResponseEntity.ok(response);
     }
