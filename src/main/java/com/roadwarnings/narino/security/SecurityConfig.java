@@ -33,13 +33,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // Alertas públicas SOLO lectura
-                        .requestMatchers(HttpMethod.GET, "/api/alert/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/alert/*").permitAll()
 
                         // Para crear / editar / borrar alertas -> autenticado
-                        .requestMatchers(HttpMethod.POST, "/api/alert/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/alert/**").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/alert/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/alert/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/alert/*").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/alert/*").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/alert/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/alert/*").authenticated()
 
                         // Todo lo demás requiere login
                         .anyRequest().authenticated()
