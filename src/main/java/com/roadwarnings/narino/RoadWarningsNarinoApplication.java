@@ -1,19 +1,22 @@
 package com.roadwarnings.narino;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@Slf4j
 @SpringBootApplication
 public class RoadWarningsNarinoApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(RoadWarningsNarinoApplication.class, args);
-        System.out.println("╔═══════════════════════════════════════════════════════════╗");
-        System.out.println("║          ROADWARNINGS NARIÑO - BACKEND API                ║");
-        System.out.println("║  🚀 Servidor iniciado correctamente                       ║");
-        System.out.println("║  📡 API: http://localhost:8080/api                        ║");
-        System.out.println("║  📚 Swagger: http://localhost:8080/api/swagger-ui.html   ║");
-        System.out.println("║  🗄️  H2 Console: http://localhost:8080/api/h2-console    ║");
-        System.out.println("╚═══════════════════════════════════════════════════════════╝");
+
+        log.info("\n╔═══════════════════════════════════════════════════════════╗");
+        log.info("║          ROADWARNINGS NARIÑO - BACKEND API                ║");
+        log.info("║  🚀 Servidor iniciado correctamente                       ║");
+        log.info("║  📡 API: http://localhost:8080/api                        ║");
+        log.info("║  📚 Swagger: http://localhost:8080/swagger-ui.html         ║");
+        log.info("║  🗄️  H2 Console: http://localhost:8080/h2-console          ║");
+        log.info("╚═══════════════════════════════════════════════════════════╝\n");
     }
 }
