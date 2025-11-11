@@ -6,6 +6,8 @@ import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.service.AlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/alert")
+@RequestMapping("/alert")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AlertController {
@@ -22,10 +24,10 @@ public class AlertController {
 
     @PostMapping
     public ResponseEntity<AlertaResponseDTO> createAlert(
-            @Valid @RequestBody AlertaRequestDTO request) {
-
-        // Sin autenticación: creamos alerta "anónima"
-        AlertaResponseDTO response = alertService.createAlert(request);
+            @Valid @RequestBody AlertaRequestDTO request,
+            Authentication authentication) {
+        String username = authentication.name();
+        AlertaResponseDTO response = alertService.createAlert(request, username);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -52,23 +54,26 @@ public class AlertController {
             @RequestParam Double latitude,
             @RequestParam Double longitude,
             @RequestParam(defaultValue = "10.0") Double radius) {
-        List<AlertaResponseDTO> alerts =
-                alertService.getNearbyAlerts(latitude, longitude, radius);
+        List<AlertaResponseDTO> alerts = alertService.getNearbyAlerts(latitude, longitude, radius);
         return ResponseEntity.ok(alerts);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<AlertaResponseDTO> updateAlert(
             @PathVariable Long id,
-            @Valid @RequestBody AlertaRequestDTO request) {
-
-        AlertaResponseDTO response = alertService.updateAlert(id, request);
+            @Valid @RequestBody AlertaRequestDTO request,
+            Authentication authentication) {
+        String username = authentication.name();
+        AlertaResponseDTO response = alertService.updateAlert(id, request, username);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
-        alertService.deleteAlert(id);
+    public ResponseEntity<Void> deleteAlert(
+            @PathVariable Long id,
+            Authentication authentication) {
+        String username = authentication.name();
+        alertService.deleteAlert(id, username);
         return ResponseEntity.noContent().build();
     }
 
@@ -76,7 +81,6 @@ public class AlertController {
     public ResponseEntity<AlertaResponseDTO> updateAlertStatus(
             @PathVariable Long id,
             @RequestParam AlertStatus status) {
-
         AlertaResponseDTO response = alertService.updateAlertStatus(id, status);
         return ResponseEntity.ok(response);
     }
