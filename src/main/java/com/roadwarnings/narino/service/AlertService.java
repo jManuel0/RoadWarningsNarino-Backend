@@ -12,16 +12,14 @@ import com.roadwarnings.narino.repository.AlertRepository;
 import com.roadwarnings.narino.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,31 +35,30 @@ public class AlertService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // ===================== CRUD PRINCIPAL =====================
-
+    /**
+     * Crear alerta.
+     * username puede ser null/"public" → se guarda sin usuario asociado.
+     */
     public AlertaResponseDTO createAlert(AlertaRequestDTO request, String username) {
         log.info("Creando alerta: {} por usuario: {}", request.getTitle(), username);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
+        User user = resolveUser(username);
 
-        // 1. Coordenadas base desde request
         Double lat = request.getLatitude();
         Double lon = request.getLongitude();
 
-        // 2. Si no hay coords pero sí dirección -> geocodificar
+        // Si llega sin lat/lon pero con dirección, intentamos geocodificar (defensivo)
         if ((lat == null || lon == null)
                 && request.getLocation() != null
                 && !request.getLocation().isBlank()) {
 
             double[] coords = geocodeAddress(request.getLocation());
-            if (coords != null && coords.length == 2) {
+            if (coords.length == 2) {
                 lat = coords[0];
                 lon = coords[1];
-                log.info("Geocodificada ubicación '{}' -> {}, {}",
-                        request.getLocation(), lat, lon);
+                log.info("Geocodificada ubicación '{}' -> {}, {}", request.getLocation(), lat, lon);
             } else {
-                log.warn("No se pudo geocodificar '{}', se dejarán coords en 0,0", request.getLocation());
+                log.warn("No se pudo geocodificar '{}', usando 0,0", request.getLocation());
                 lat = 0.0;
                 lon = 0.0;
             }
@@ -74,12 +71,9 @@ public class AlertService {
                 .latitude(lat)
                 .longitude(lon)
                 .location(request.getLocation())
-                .municipality(request.getMunicipality())
                 .severity(request.getSeverity())
-                .imageUrl(request.getImageUrl())
-                .estimatedDuration(request.getEstimatedDuration())
-                .affectedRoads(request.getAffectedRoads())
                 .status(AlertStatus.ACTIVE)
+                .imageUrl(request.getImageUrl())
                 .user(user)
                 .build();
 
@@ -121,21 +115,15 @@ public class AlertService {
         Alert alert = alertRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
 
-        if (alert.getUser() == null || !alert.getUser().getUsername().equals(username)) {
-            throw new UnauthorizedException("No tienes permiso para actualizar esta alerta");
-        }
+        validateOwnership(alert, username);
 
         alert.setType(request.getType());
         alert.setTitle(request.getTitle());
         alert.setDescription(request.getDescription());
         alert.setLocation(request.getLocation());
-        alert.setMunicipality(request.getMunicipality());
         alert.setSeverity(request.getSeverity());
         alert.setImageUrl(request.getImageUrl());
-        alert.setEstimatedDuration(request.getEstimatedDuration());
-        alert.setAffectedRoads(request.getAffectedRoads());
 
-        // Coordenadas
         Double lat = request.getLatitude();
         Double lon = request.getLongitude();
 
@@ -144,7 +132,7 @@ public class AlertService {
                 && !request.getLocation().isBlank()) {
 
             double[] coords = geocodeAddress(request.getLocation());
-            if (coords != null && coords.length == 2) {
+            if (coords.length == 2) {
                 lat = coords[0];
                 lon = coords[1];
                 log.info("Geocodificada ubicación (update) '{}' -> {}, {}",
@@ -168,9 +156,7 @@ public class AlertService {
         Alert alert = alertRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
 
-        if (alert.getUser() == null || !alert.getUser().getUsername().equals(username)) {
-            throw new UnauthorizedException("No tienes permiso para eliminar esta alerta");
-        }
+        validateOwnership(alert, username);
 
         alertRepository.delete(alert);
     }
@@ -185,9 +171,29 @@ public class AlertService {
         return mapToResponseDTO(alert);
     }
 
-    // ===================== HELPERS =====================
+    // ==== Helpers ====
+
+    private void validateOwnership(Alert alert, String username) {
+        if (alert.getUser() != null
+                && username != null
+                && !username.isBlank()
+                && !"public".equalsIgnoreCase(username)
+                && !alert.getUser().getUsername().equals(username)) {
+            throw new UnauthorizedException("No tienes permiso para modificar esta alerta");
+        }
+    }
+
+    private User resolveUser(String username) {
+        if (username == null || username.isBlank() || "public".equalsIgnoreCase(username)) {
+            return null;
+        }
+        Optional<User> existing = userRepository.findByUsername(username);
+        return existing.orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
+    }
 
     private AlertaResponseDTO mapToResponseDTO(Alert alert) {
+        User user = alert.getUser();
+
         return AlertaResponseDTO.builder()
                 .id(alert.getId())
                 .type(alert.getType())
@@ -196,25 +202,21 @@ public class AlertService {
                 .latitude(alert.getLatitude())
                 .longitude(alert.getLongitude())
                 .location(alert.getLocation())
-                .municipality(alert.getMunicipality())
                 .severity(alert.getSeverity())
                 .status(alert.getStatus())
                 .imageUrl(alert.getImageUrl())
                 .upvotes(alert.getUpvotes())
                 .downvotes(alert.getDownvotes())
-                .estimatedDuration(alert.getEstimatedDuration())
-                .affectedRoads(alert.getAffectedRoads())
                 .createdAt(alert.getCreatedAt())
                 .updatedAt(alert.getUpdatedAt())
                 .expiresAt(alert.getExpiresAt())
-                .userId(alert.getUser() != null ? alert.getUser().getId() : null)
-                .username(alert.getUser() != null ? alert.getUser().getUsername() : null)
+                .userId(user != null ? user.getId() : null)
+                .username(user != null ? user.getUsername() : null)
                 .build();
     }
 
-    // Distancia Haversine en KM
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int EARTH_RADIUS = 6371;
+        final int EARTH_RADIUS = 6371; // km
 
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
@@ -230,7 +232,7 @@ public class AlertService {
 
     /**
      * Geocodifica una dirección usando Nominatim (OpenStreetMap).
-     * Devuelve [lat, lon] o null si no hay resultado o hay error.
+     * Devuelve [lat, lon] o array vacío si falla.
      */
     private double[] geocodeAddress(String address) {
         try {
@@ -244,7 +246,8 @@ public class AlertService {
             RestTemplate restTemplate = new RestTemplate();
 
             HttpHeaders headers = new HttpHeaders();
-            headers.add("User-Agent", "roadwarnings-narino/1.0"); // requerido por Nominatim
+            headers.set("User-Agent", "roadwarnings-narino/1.0");
+
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             ResponseEntity<String> response = restTemplate.exchange(
@@ -256,7 +259,7 @@ public class AlertService {
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 log.warn("Nominatim respondió con código no exitoso: {}", response.getStatusCode());
-                return null;
+                return new double[0];
             }
 
             JsonNode root = objectMapper.readTree(response.getBody());
@@ -268,11 +271,11 @@ public class AlertService {
             }
 
             log.warn("Nominatim no encontró resultados para '{}'", address);
-            return null;
+            return new double[0];
 
         } catch (Exception e) {
             log.error("Error geocodificando dirección '{}': {}", address, e.getMessage());
-            return null;
+            return new double[0];
         }
     }
 }
