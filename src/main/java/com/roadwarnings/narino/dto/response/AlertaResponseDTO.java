@@ -6,6 +6,7 @@ import com.roadwarnings.narino.enums.AlertSeverity;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -23,13 +24,17 @@ public class AlertaResponseDTO {
     private String municipality;
     private AlertSeverity severity;
     private AlertStatus status;
+
     private String username;
     private Long userId;
+
     private String imageUrl;
     private Integer upvotes;
     private Integer downvotes;
+
     private Integer estimatedDuration;
-    private String affectedRoads;
+    private List<String> affectedRoads;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime expiresAt;

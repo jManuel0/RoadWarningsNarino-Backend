@@ -5,6 +5,8 @@ import com.roadwarnings.narino.enums.AlertSeverity;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,31 +23,26 @@ public class AlertaRequestDTO {
     @Size(max = 1000, message = "La descripción no puede exceder 1000 caracteres")
     private String description;
 
-    @NotNull(message = "La latitud es obligatoria")
-    @DecimalMin(value = "-90.0", message = "Latitud inválida")
-    @DecimalMax(value = "90.0", message = "Latitud inválida")
+    // Coordenadas (pueden venir del mapa o calcularse desde location)
     private Double latitude;
 
-    @NotNull(message = "La longitud es obligatoria")
-    @DecimalMin(value = "-180.0", message = "Longitud inválida")
-    @DecimalMax(value = "180.0", message = "Longitud inválida")
     private Double longitude;
 
-    // Dirección (texto libre)
+    // Dirección textual (Ej: "Pasto, Calle 18 con Cra 25")
     private String location;
 
-    // Municipio seleccionado en el frontend
+    // Municipio (Pasto, Ipiales, Tumaco, etc.)
     private String municipality;
 
     // Severidad (CRITICA, ALTA, MEDIA, BAJA)
     private AlertSeverity severity;
 
-    // URL opcional
+    // URL opcional de imagen
     private String imageUrl;
 
     // Duración estimada en minutos (opcional)
     private Integer estimatedDuration;
 
-    // Vías afectadas como texto (ej: "Ruta 25; Calle 18")
-    private String affectedRoads;
+    // Lista de vías afectadas (opcional)
+    private List<String> affectedRoads;
 }
