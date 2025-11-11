@@ -1,16 +1,15 @@
 package com.roadwarnings.narino.entity;
 
+import com.roadwarnings.narino.enums.AlertType;
+import com.roadwarnings.narino.enums.AlertSeverity;
+import com.roadwarnings.narino.enums.AlertStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import com.roadwarnings.narino.enums.AlertType;
-import com.roadwarnings.narino.enums.AlertStatus;
-import com.roadwarnings.narino.enums.AlertSeverity;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "alerts")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -21,10 +20,9 @@ public class Alert {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private AlertType type;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @Column(length = 1000)
@@ -36,42 +34,46 @@ public class Alert {
     @Column(nullable = false)
     private Double longitude;
 
+    // Dirección o referencia
     private String location;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default  // ← AGREGADO
-    private AlertSeverity severity = AlertSeverity.MEDIUM;
+    // Municipio (Pasto, Ipiales, Tumaco, etc.)
+    private String municipality;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default  // ← AGREGADO
+    private AlertSeverity severity;
+
+    @Enumerated(EnumType.STRING)
     private AlertStatus status = AlertStatus.ACTIVE;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
 
     private String imageUrl;
 
-    @Column(nullable = false)
-    @Builder.Default  // ← AGREGADO
     private Integer upvotes = 0;
-
-    @Column(nullable = false)
-    @Builder.Default  // ← AGREGADO
     private Integer downvotes = 0;
 
-    @Column(nullable = false, updatable = false)
-    @Builder.Default  // ← AGREGADO
-    private LocalDateTime createdAt = LocalDateTime.now();
+    // Duración estimada en minutos
+    private Integer estimatedDuration;
 
+    // Vías afectadas, separadas por comas (ej: "Ruta 25,Calle 18")
+    @Column(length = 500)
+    private String affectedRoads;
+
+    private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
     private LocalDateTime expiresAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = createdAt;
+    }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 }
