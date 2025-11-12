@@ -1,56 +1,44 @@
 package com.roadwarnings.narino.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
 @Service
 public class JwtService {
 
-    @Value("${app.jwt.secret}")
-    private String secret;
-
-    @Value("${app.jwt.expiration-ms:86400000}") // 1 día
-    private long expirationMs;
-
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-    }
+    // OJO: en producción sacas esto a variables de entorno
+    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final long EXPIRATION = 1000L * 60 * 60 * 24; // 24h
 
     public String generateToken(String username) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + expirationMs);
-
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .signWith(key)
                 .compact();
     }
 
     public String extractUsername(String token) {
-        return parseClaims(token).getBody().getSubject();
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
-    public boolean isValid(String token) {
+    public boolean isTokenValid(String token, String username) {
         try {
-            parseClaims(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
+            String subject = extractUsername(token);
+            return subject.equals(username);
+        } catch (Exception e) {
             return false;
         }
-    }
-
-    private Jws<Claims> parseClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token);
     }
 }

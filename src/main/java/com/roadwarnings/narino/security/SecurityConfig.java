@@ -1,49 +1,75 @@
 package com.roadwarnings.narino.security;
 
+import com.roadwarnings.narino.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/alert/**",
-            "/v3/api-docs/**",
-            "/swagger-ui.html",
-            "/swagger-ui/**",
-            "/actuator/**"
-    };
+    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final UserRepository userRepository;
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> userRepository.findByUsername(username)
+                .map(u -> org.springframework.security.core.userdetails.User
+                        .withUsername(u.getUsername())
+                        .password(u.getPassword())
+                        .roles(u.getRole().name())
+                        .build())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        // público: auth, alertas GET, GPS, docs
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/alert",
+                                "/api/alert/active",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**"
+                        ).permitAll()
+                        // resto requiere login (por ej. crear alerta si decides proteger POST)
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults());
-
-        // 🚫 IMPORTANTE:
-        // No añadimos ningún filtro custom aquí (nada de authFilter ni JWTFilter)
-        // para evitar el error del filtro null.
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService());
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean
