@@ -2,6 +2,8 @@ package com.roadwarnings.narino.security;
 
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.repository.UserRepository;
+
+import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +26,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
+    private static final Filter JwtAuthFilter = null;
     private final UserRepository userRepository;
 
     @Bean
@@ -77,7 +79,7 @@ public class SecurityConfig {
         );
 
         http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(JwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
