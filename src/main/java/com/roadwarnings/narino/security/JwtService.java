@@ -3,6 +3,8 @@ package com.roadwarnings.narino.security;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -33,10 +35,10 @@ public class JwtService {
                 .getSubject();
     }
 
-    public boolean isTokenValid(String token, String username) {
+    public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             String subject = extractUsername(token);
-            return subject.equals(username);
+            return subject.equals(userDetails);
         } catch (Exception e) {
             return false;
         }
