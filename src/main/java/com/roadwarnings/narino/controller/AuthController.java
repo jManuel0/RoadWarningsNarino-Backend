@@ -1,13 +1,17 @@
 package com.roadwarnings.narino.controller;
 
+import com.roadwarnings.narino.dto.auth.AuthResponse;
+import com.roadwarnings.narino.dto.auth.LoginRequest;
+import com.roadwarnings.narino.dto.auth.RegisterRequest;
 import com.roadwarnings.narino.entity.User;
+import com.roadwarnings.narino.enums.UserRole;
 import com.roadwarnings.narino.repository.UserRepository;
 import com.roadwarnings.narino.security.JwtService;
-import lombok.Data;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,47 +27,43 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<com.roadwarnings.narino.dto.auth.AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("El usuario ya existe");
+            return ResponseEntity.badRequest().build();
+        }
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().build();
         }
 
         User user = User.builder()
                 .username(request.getUsername())
+                .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .role(UserRole.USER)
+                .isActive(true)
                 .build();
 
         userRepository.save(user);
-        return ResponseEntity.ok("Usuario registrado");
+
+        String token = jwtService.generateToken(user.getUsername());
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        var authToken = new UsernamePasswordAuthenticationToken(
-                request.getUsername(),
-                request.getPassword()
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        String input = request.getUsernameOrEmail();
+
+        // permitir login por email
+        String username = userRepository.findByEmail(input)
+                .map(User::getUsername)
+                .orElse(input);
+
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, request.getPassword())
         );
-        authenticationManager.authenticate(authToken);
 
-        String token = jwtService.generateToken(request.getUsername());
-
-        return ResponseEntity.ok(new JwtResponse(token));
-    }
-
-    @Data
-    public static class RegisterRequest {
-        private String username;
-        private String password;
-    }
-
-    @Data
-    public static class LoginRequest {
-        private String username;
-        private String password;
-    }
-
-    @Data
-    public static class JwtResponse {
-        private final String token;
+        String token = jwtService.generateToken(auth.getName());
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 }
