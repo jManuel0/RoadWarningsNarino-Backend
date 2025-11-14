@@ -31,6 +31,9 @@ public class AlertService {
 
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
+    private final WebSocketService webSocketService;
+    private final UserStatisticsService statisticsService;
+    private final BadgeService badgeService;
 
     private static final String ALERT_NOT_FOUND = "Alerta no encontrada";
     private static final String USER_NOT_FOUND = "Usuario no encontrado";
@@ -82,7 +85,17 @@ public class AlertService {
         alert = alertRepository.save(alert);
         log.info("Alerta creada con ID: {}", alert.getId());
 
-        return mapToResponseDTO(alert);
+        // Actualizar estadísticas del usuario
+        if (user != null) {
+            statisticsService.incrementAlertCreated(user.getId());
+            badgeService.checkAndAwardBadges(user.getId());
+        }
+
+        // Broadcast a través de WebSocket
+        AlertaResponseDTO response = mapToResponseDTO(alert);
+        webSocketService.broadcastNewAlert(response);
+
+        return response;
     }
 
     public List<AlertaResponseDTO> getAllAlerts() {
@@ -161,7 +174,12 @@ public class AlertService {
         if (lon != null) alert.setLongitude(lon);
 
         alert = alertRepository.save(alert);
-        return mapToResponseDTO(alert);
+
+        // Broadcast actualización a través de WebSocket
+        AlertaResponseDTO response = mapToResponseDTO(alert);
+        webSocketService.broadcastAlertUpdate(response);
+
+        return response;
     }
 
     public void deleteAlert(Long id, String username) {
@@ -171,6 +189,9 @@ public class AlertService {
         validateOwnership(alert, username);
 
         alertRepository.delete(alert);
+
+        // Broadcast eliminación a través de WebSocket
+        webSocketService.broadcastAlertDeletion(id);
     }
 
     public AlertaResponseDTO updateAlertStatus(Long id, AlertStatus status) {
@@ -180,7 +201,11 @@ public class AlertService {
         alert.setStatus(status);
         alert = alertRepository.save(alert);
 
-        return mapToResponseDTO(alert);
+        // Broadcast cambio de estado a través de WebSocket
+        AlertaResponseDTO response = mapToResponseDTO(alert);
+        webSocketService.broadcastAlertStatusChange(response);
+
+        return response;
     }
 
     public AlertaResponseDTO upvoteAlert(Long id) {
@@ -191,6 +216,16 @@ public class AlertService {
         alert = alertRepository.save(alert);
 
         log.info("Alerta {} recibió upvote. Total: {}", id, alert.getUpvotes());
+
+        // Actualizar estadísticas del creador de la alerta
+        if (alert.getUser() != null) {
+            statisticsService.incrementUpvoteReceived(alert.getUser().getId());
+            badgeService.checkAndAwardBadges(alert.getUser().getId());
+        }
+
+        // Broadcast actualización de votos a través de WebSocket
+        webSocketService.broadcastAlertVoteUpdate(id, alert.getUpvotes(), alert.getDownvotes());
+
         return mapToResponseDTO(alert);
     }
 
@@ -202,6 +237,15 @@ public class AlertService {
         alert = alertRepository.save(alert);
 
         log.info("Alerta {} recibió downvote. Total: {}", id, alert.getDownvotes());
+
+        // Actualizar estadísticas del creador de la alerta
+        if (alert.getUser() != null) {
+            statisticsService.incrementDownvoteReceived(alert.getUser().getId());
+        }
+
+        // Broadcast actualización de votos a través de WebSocket
+        webSocketService.broadcastAlertVoteUpdate(id, alert.getUpvotes(), alert.getDownvotes());
+
         return mapToResponseDTO(alert);
     }
 
