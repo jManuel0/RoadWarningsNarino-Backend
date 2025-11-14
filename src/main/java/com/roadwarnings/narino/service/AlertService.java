@@ -3,16 +3,21 @@ package com.roadwarnings.narino.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.roadwarnings.narino.dto.request.AlertaRequestDTO;
+import com.roadwarnings.narino.dto.request.AlertFilterDTO;
 import com.roadwarnings.narino.dto.response.AlertaResponseDTO;
 import com.roadwarnings.narino.entity.Alert;
+import com.roadwarnings.narino.entity.FavoriteRoute;
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.exception.UnauthorizedException;
 import com.roadwarnings.narino.repository.AlertRepository;
 import com.roadwarnings.narino.repository.UserRepository;
+import com.roadwarnings.narino.repository.RouteRepository;
+import com.roadwarnings.narino.repository.FavoriteRouteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -20,8 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +41,9 @@ public class AlertService {
     private final WebSocketService webSocketService;
     private final UserStatisticsService statisticsService;
     private final BadgeService badgeService;
+    private final RouteRepository routeRepository;
+    private final FavoriteRouteRepository favoriteRouteRepository;
+    private final PushNotificationService pushNotificationService;
 
     private static final String ALERT_NOT_FOUND = "Alerta no encontrada";
     private static final String USER_NOT_FOUND = "Usuario no encontrado";
@@ -90,6 +100,12 @@ public class AlertService {
             statisticsService.incrementAlertCreated(user.getId());
             badgeService.checkAndAwardBadges(user.getId());
         }
+
+        // Actualizar contador de alertas en rutas cercanas
+        updateNearbyRoutesAlertCount(alert.getLatitude(), alert.getLongitude());
+
+        // Notificar a usuarios con rutas favoritas cercanas
+        notifyUsersWithNearbyFavoriteRoutes(alert);
 
         // Broadcast a través de WebSocket
         AlertaResponseDTO response = mapToResponseDTO(alert);
@@ -249,6 +265,132 @@ public class AlertService {
         return mapToResponseDTO(alert);
     }
 
+    /**
+     * Filtra alertas según criterios avanzados
+     */
+    public Page<AlertaResponseDTO> filterAlerts(AlertFilterDTO filter, Pageable pageable) {
+        List<Alert> alerts = alertRepository.findAll();
+
+        // Aplicar filtros
+        List<Alert> filteredAlerts = alerts.stream()
+                .filter(alert -> matchesFilter(alert, filter))
+                .collect(Collectors.toList());
+
+        // Paginación manual
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filteredAlerts.size());
+
+        List<AlertaResponseDTO> pageContent = filteredAlerts.subList(start, end).stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(pageContent, pageable, filteredAlerts.size());
+    }
+
+    /**
+     * Obtiene alertas de un usuario específico
+     */
+    public Page<AlertaResponseDTO> getAlertsByUser(Long userId, Pageable pageable) {
+        List<Alert> alerts = alertRepository.findAll().stream()
+                .filter(alert -> alert.getUser() != null && alert.getUser().getId().equals(userId))
+                .collect(Collectors.toList());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), alerts.size());
+
+        List<AlertaResponseDTO> pageContent = alerts.subList(start, end).stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(pageContent, pageable, alerts.size());
+    }
+
+    /**
+     * Obtiene alertas del usuario autenticado
+     */
+    public Page<AlertaResponseDTO> getMyAlerts(String username, Pageable pageable) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
+
+        return getAlertsByUser(user.getId(), pageable);
+    }
+
+    /**
+     * Expira manualmente una alerta
+     */
+    public AlertaResponseDTO expireAlert(Long id, String username) {
+        Alert alert = alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
+
+        validateOwnership(alert, username);
+
+        alert.setStatus(AlertStatus.EXPIRED);
+        alert.setExpiresAt(LocalDateTime.now());
+        alert = alertRepository.save(alert);
+
+        // Broadcast cambio de estado a través de WebSocket
+        AlertaResponseDTO response = mapToResponseDTO(alert);
+        webSocketService.broadcastAlertStatusChange(response);
+
+        log.info("Alerta {} expirada manualmente por {}", id, username);
+
+        return response;
+    }
+
+    /**
+     * Verifica si una alerta cumple con los criterios de filtro
+     */
+    private boolean matchesFilter(Alert alert, AlertFilterDTO filter) {
+        // Filtro por tipo
+        if (filter.getType() != null && !alert.getType().equals(filter.getType())) {
+            return false;
+        }
+
+        // Filtro por severidad
+        if (filter.getSeverity() != null && !alert.getSeverity().equals(filter.getSeverity())) {
+            return false;
+        }
+
+        // Filtro por estado
+        if (filter.getStatus() != null && !alert.getStatus().equals(filter.getStatus())) {
+            return false;
+        }
+
+        // Filtro por ubicación (radio)
+        if (filter.getLatitude() != null && filter.getLongitude() != null && filter.getRadiusKm() != null) {
+            double distance = calculateDistance(
+                    filter.getLatitude(), filter.getLongitude(),
+                    alert.getLatitude(), alert.getLongitude()
+            );
+            if (distance > filter.getRadiusKm()) {
+                return false;
+            }
+        }
+
+        // Filtro por fecha de creación (desde)
+        if (filter.getCreatedAfter() != null && alert.getCreatedAt().isBefore(filter.getCreatedAfter())) {
+            return false;
+        }
+
+        // Filtro por fecha de creación (hasta)
+        if (filter.getCreatedBefore() != null && alert.getCreatedAt().isAfter(filter.getCreatedBefore())) {
+            return false;
+        }
+
+        // Filtro por upvotes mínimos
+        if (filter.getMinUpvotes() != null && alert.getUpvotes() < filter.getMinUpvotes()) {
+            return false;
+        }
+
+        // Filtro por usuario
+        if (filter.getUserId() != null && (alert.getUser() == null || !alert.getUser().getId().equals(filter.getUserId()))) {
+                return false;
+            }
+        
+
+        return true;
+    }
+
     // ==== Helpers ====
 
     private void validateOwnership(Alert alert, String username) {
@@ -355,5 +497,94 @@ public class AlertService {
             log.error("Error geocodificando dirección '{}': {}", address, e.getMessage());
             return new double[0];
         }
+    }
+
+    /**
+     * Notifica a usuarios que tienen rutas favoritas cerca de una alerta
+     */
+    private void notifyUsersWithNearbyFavoriteRoutes(Alert alert) {
+        if (alert.getLatitude() == null || alert.getLongitude() == null) {
+            return;
+        }
+
+        double radiusKm = 10.0;
+
+        // Obtener todas las rutas favoritas con notificaciones habilitadas
+        favoriteRouteRepository.findAll().stream()
+            .filter(FavoriteRoute::getNotificationsEnabled)
+            .forEach(favRoute -> {
+                // Calcular distancia desde la alerta al punto medio de la ruta
+                double routeMidLat = (favRoute.getRoute().getOriginLatitude() +
+                                     favRoute.getRoute().getDestinationLatitude()) / 2;
+                double routeMidLon = (favRoute.getRoute().getOriginLongitude() +
+                                     favRoute.getRoute().getDestinationLongitude()) / 2;
+
+                double distance = calculateDistance(
+                    alert.getLatitude(), alert.getLongitude(),
+                    routeMidLat, routeMidLon
+                );
+
+                if (distance <= radiusKm) {
+                    // Enviar notificación push al usuario
+                    String title = "⚠️ Nueva alerta en tu ruta";
+                    String message = String.format("%s cerca de %s",
+                        alert.getTitle(),
+                        favRoute.getRoute().getName());
+
+                    java.util.Map<String, String> data = new java.util.HashMap<>();
+                    data.put("alertId", alert.getId().toString());
+                    data.put("routeId", favRoute.getRoute().getId().toString());
+                    data.put("type", "ALERT_NEARBY_ROUTE");
+
+                    pushNotificationService.sendNotificationToUser(
+                        favRoute.getUser().getId(),
+                        title,
+                        message,
+                        data
+                    );
+
+                    log.info("Notificación enviada a usuario {} por alerta en ruta {}",
+                        favRoute.getUser().getUsername(),
+                        favRoute.getRoute().getName());
+                }
+            });
+    }
+
+    /**
+     * Actualiza el contador de alertas activas en rutas cercanas a una ubicación
+     */
+    private void updateNearbyRoutesAlertCount(Double latitude, Double longitude) {
+        if (latitude == null || longitude == null) {
+            return;
+        }
+
+        // Buscar rutas dentro de un radio de 10km
+        double radiusKm = 10.0;
+
+        routeRepository.findAll().forEach(route -> {
+            // Calcular distancia desde la alerta a la ruta (usando punto medio de origen-destino)
+            double routeMidLat = (route.getOriginLatitude() + route.getDestinationLatitude()) / 2;
+            double routeMidLon = (route.getOriginLongitude() + route.getDestinationLongitude()) / 2;
+
+            double distance = calculateDistance(latitude, longitude, routeMidLat, routeMidLon);
+
+            if (distance <= radiusKm) {
+                // Contar alertas activas cerca de esta ruta
+                long activeAlertsCount = alertRepository.findByStatus(AlertStatus.ACTIVE).stream()
+                    .filter(alert -> {
+                        double distToRoute = calculateDistance(
+                            alert.getLatitude(), alert.getLongitude(),
+                            routeMidLat, routeMidLon
+                        );
+                        return distToRoute <= radiusKm;
+                    })
+                    .count();
+
+                route.setActiveAlertsCount((int) activeAlertsCount);
+                routeRepository.save(route);
+
+                log.debug("Ruta {} actualizada con {} alertas activas", route.getId(), activeAlertsCount);
+            }
+        });
     }
 }

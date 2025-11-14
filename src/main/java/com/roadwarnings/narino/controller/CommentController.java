@@ -83,6 +83,13 @@ public class CommentController {
         return ResponseEntity.ok(commentService.incrementHelpfulCount(id));
     }
 
+    @GetMapping("/alert/{alertId}/top-helpful")
+    public ResponseEntity<List<CommentResponseDTO>> getTopHelpfulComments(
+            @PathVariable Long alertId,
+            @RequestParam(defaultValue = "5") Integer limit) {
+        return ResponseEntity.ok(commentService.getTopHelpfulComments(alertId, limit));
+    }
+
     private String getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

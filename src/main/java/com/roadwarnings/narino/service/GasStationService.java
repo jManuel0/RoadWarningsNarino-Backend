@@ -1,5 +1,6 @@
 package com.roadwarnings.narino.service;
 
+import com.roadwarnings.narino.dto.request.GasStationFilterDTO;
 import com.roadwarnings.narino.dto.request.GasStationRequestDTO;
 import com.roadwarnings.narino.dto.response.GasStationResponseDTO;
 import com.roadwarnings.narino.entity.GasStation;
@@ -8,11 +9,14 @@ import com.roadwarnings.narino.repository.GasStationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -110,6 +114,139 @@ public class GasStationService {
                 ) <= radiusKm)
                 .map(this::mapToResponseDTO)
                 .toList();
+    }
+
+    /**
+     * Filtra gasolineras segun criterios avanzados
+     */
+    public Page<GasStationResponseDTO> filterGasStations(GasStationFilterDTO filter, Pageable pageable) {
+        List<GasStation> gasStations = gasStationRepository.findAll();
+
+        // Aplicar filtros
+        List<GasStation> filtered = gasStations.stream()
+                .filter(gs -> matchesFilter(gs, filter))
+                .collect(Collectors.toList());
+
+        // Paginacion manual
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filtered.size());
+
+        List<GasStationResponseDTO> pageContent = filtered.subList(start, end).stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(pageContent, pageable, filtered.size());
+    }
+
+    /**
+     * Obtiene gasolineras abiertas en este momento
+     */
+    public List<GasStationResponseDTO> getOpenNow() {
+        LocalTime now = LocalTime.now();
+
+        return gasStationRepository.findAll().stream()
+                .filter(gs -> gs.getIsAvailable())
+                .filter(gs -> {
+                    if (gs.getIsOpen24Hours()) {
+                        return true;
+                    }
+                    if (gs.getOpeningTime() != null && gs.getClosingTime() != null) {
+                        try {
+                            LocalTime opening = LocalTime.parse(gs.getOpeningTime());
+                            LocalTime closing = LocalTime.parse(gs.getClosingTime());
+                            return now.isAfter(opening) && now.isBefore(closing);
+                        } catch (Exception e) {
+                            log.warn("Error parsing time for gas station {}: {}", gs.getId(), e.getMessage());
+                            return false;
+                        }
+                    }
+                    return false;
+                })
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene gasolineras por tipo de combustible
+     */
+    public List<GasStationResponseDTO> getByFuelType(String fuelType) {
+        return gasStationRepository.findAll().stream()
+                .filter(gs -> {
+                    if ("GASOLINE".equalsIgnoreCase(fuelType)) {
+                        return gs.getHasGasoline();
+                    } else if ("DIESEL".equalsIgnoreCase(fuelType)) {
+                        return gs.getHasDiesel();
+                    }
+                    return false;
+                })
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    private boolean matchesFilter(GasStation gs, GasStationFilterDTO filter) {
+        // Filtro por marca
+        if (filter.getBrand() != null && !filter.getBrand().isBlank()) {
+            if (gs.getBrand() == null || !gs.getBrand().toLowerCase().contains(filter.getBrand().toLowerCase())) {
+                return false;
+            }
+        }
+
+        // Filtro por municipio
+        if (filter.getMunicipality() != null && !filter.getMunicipality().isBlank()) {
+            if (gs.getMunicipality() == null || !gs.getMunicipality().toLowerCase().contains(filter.getMunicipality().toLowerCase())) {
+                return false;
+            }
+        }
+
+        // Filtro por disponibilidad
+        if (filter.getIsAvailable() != null && !gs.getIsAvailable().equals(filter.getIsAvailable())) {
+            return false;
+        }
+
+        // Filtro por gasolina
+        if (filter.getHasGasoline() != null && filter.getHasGasoline() && !gs.getHasGasoline()) {
+            return false;
+        }
+
+        // Filtro por diesel
+        if (filter.getHasDiesel() != null && filter.getHasDiesel() && !gs.getHasDiesel()) {
+            return false;
+        }
+
+        // Filtro por 24 horas
+        if (filter.getIsOpen24Hours() != null && !gs.getIsOpen24Hours().equals(filter.getIsOpen24Hours())) {
+            return false;
+        }
+
+        // Filtro por precio maximo de gasolina
+        if (filter.getMaxGasolinePrice() != null && gs.getGasolinePrice() != null) {
+            if (gs.getGasolinePrice().compareTo(java.math.BigDecimal.valueOf(filter.getMaxGasolinePrice())) > 0) {
+                return false;
+            }
+        }
+
+        // Filtro por precio maximo de diesel
+        if (filter.getMaxDieselPrice() != null && gs.getDieselPrice() != null) {
+            if (gs.getDieselPrice().compareTo(java.math.BigDecimal.valueOf(filter.getMaxDieselPrice())) > 0) {
+                return false;
+            }
+        }
+
+        // Filtro por ubicacion (radio)
+        if (filter.getLatitude() != null && filter.getLongitude() != null && filter.getRadiusKm() != null) {
+            if (gs.getLatitude() == null || gs.getLongitude() == null) {
+                return false;
+            }
+            double distance = calculateDistanceKm(
+                    filter.getLatitude(), filter.getLongitude(),
+                    gs.getLatitude(), gs.getLongitude()
+            );
+            if (distance > filter.getRadiusKm()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private double calculateDistanceKm(double lat1, double lon1, double lat2, double lon2) {

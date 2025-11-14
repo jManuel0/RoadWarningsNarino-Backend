@@ -1,8 +1,10 @@
 package com.roadwarnings.narino.controller;
 
+import com.roadwarnings.narino.dto.request.GasStationFilterDTO;
 import com.roadwarnings.narino.dto.request.GasStationRequestDTO;
 import com.roadwarnings.narino.dto.response.GasStationResponseDTO;
 import com.roadwarnings.narino.service.GasStationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -72,6 +74,29 @@ public class GasStationController {
         return ResponseEntity.ok(
                 gasStationService.getNearbyGasStations(latitude, longitude, radiusKm)
         );
+    }
+
+    @PostMapping("/filter")
+    public ResponseEntity<Page<GasStationResponseDTO>> filter(
+            @Valid @RequestBody GasStationFilterDTO filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ResponseEntity.ok(gasStationService.filterGasStations(filter, pageable));
+    }
+
+    @GetMapping("/open-now")
+    public ResponseEntity<List<GasStationResponseDTO>> getOpenNow() {
+        return ResponseEntity.ok(gasStationService.getOpenNow());
+    }
+
+    @GetMapping("/fuel-type/{fuelType}")
+    public ResponseEntity<List<GasStationResponseDTO>> getByFuelType(@PathVariable String fuelType) {
+        return ResponseEntity.ok(gasStationService.getByFuelType(fuelType));
     }
 }
 

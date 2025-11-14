@@ -1,7 +1,11 @@
 package com.roadwarnings.narino.controller;
 
+import com.roadwarnings.narino.dto.request.ChangePasswordRequestDTO;
+import com.roadwarnings.narino.dto.request.ForgotPasswordRequestDTO;
+import com.roadwarnings.narino.dto.request.ResetPasswordRequestDTO;
 import com.roadwarnings.narino.dto.request.UserUpdateRequestDTO;
 import com.roadwarnings.narino.dto.response.UserResponseDTO;
+import com.roadwarnings.narino.service.PasswordResetService;
 import com.roadwarnings.narino.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
@@ -63,6 +68,25 @@ public class UserController {
         String username = getAuthenticatedUsername();
         userService.deleteUser(id, username);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequestDTO request) {
+        String username = getAuthenticatedUsername();
+        passwordResetService.changePassword(username, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO request) {
+        passwordResetService.initiatePasswordReset(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
+        passwordResetService.resetPassword(request);
+        return ResponseEntity.ok().build();
     }
 
     private String getAuthenticatedUsername() {

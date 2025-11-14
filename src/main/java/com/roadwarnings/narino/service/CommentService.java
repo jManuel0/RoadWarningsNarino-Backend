@@ -28,6 +28,9 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
+    private final UserStatisticsService statisticsService;
+    private final BadgeService badgeService;
+    private final WebSocketService webSocketService;
 
     private static final String COMMENT_NOT_FOUND = "Comentario no encontrado";
     private static final String ALERT_NOT_FOUND = "Alerta no encontrada";
@@ -52,7 +55,15 @@ public class CommentService {
         comment = commentRepository.save(comment);
         log.info("Comentario creado con ID: {}", comment.getId());
 
-        return mapToResponseDTO(comment);
+        // Actualizar estadísticas del usuario
+        statisticsService.incrementCommentPosted(user.getId());
+        badgeService.checkAndAwardBadges(user.getId());
+
+        // Broadcast a través de WebSocket
+        CommentResponseDTO response = mapToResponseDTO(comment);
+        webSocketService.broadcastNewComment(response);
+
+        return response;
     }
 
     public List<CommentResponseDTO> getCommentsByAlertId(Long alertId) {
@@ -129,6 +140,21 @@ public class CommentService {
 
         log.info("Comentario {} marcado como útil. Total: {}", id, comment.getHelpfulCount());
         return mapToResponseDTO(comment);
+    }
+
+    /**
+     * Obtiene los comentarios mas utiles para una alerta
+     */
+    public List<CommentResponseDTO> getTopHelpfulComments(Long alertId, Integer limit) {
+        if (!alertRepository.existsById(alertId)) {
+            throw new ResourceNotFoundException(ALERT_NOT_FOUND);
+        }
+
+        return commentRepository.findByAlertId(alertId).stream()
+                .sorted((c1, c2) -> c2.getHelpfulCount().compareTo(c1.getHelpfulCount()))
+                .limit(limit != null ? limit : 5)
+                .map(this::mapToResponseDTO)
+                .toList();
     }
 
     private void validateOwnership(Comment comment, String username) {

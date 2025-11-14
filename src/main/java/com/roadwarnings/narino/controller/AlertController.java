@@ -1,6 +1,7 @@
 package com.roadwarnings.narino.controller;
 
 import com.roadwarnings.narino.dto.request.AlertaRequestDTO;
+import com.roadwarnings.narino.dto.request.AlertFilterDTO;
 import com.roadwarnings.narino.dto.response.AlertaResponseDTO;
 import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.service.AlertService;
@@ -119,6 +120,51 @@ public class AlertController {
     @PostMapping("/{id}/downvote")
     public ResponseEntity<AlertaResponseDTO> downvoteAlert(@PathVariable Long id) {
         return ResponseEntity.ok(alertService.downvoteAlert(id));
+    }
+
+    @GetMapping("/my-alerts")
+    public ResponseEntity<Page<AlertaResponseDTO>> getMyAlerts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+
+        String username = getAuthenticatedUsername();
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ResponseEntity.ok(alertService.getMyAlerts(username, pageable));
+    }
+
+    @PostMapping("/filter")
+    public ResponseEntity<Page<AlertaResponseDTO>> filterAlerts(
+            @Valid @RequestBody AlertFilterDTO filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ResponseEntity.ok(alertService.filterAlerts(filter, pageable));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Page<AlertaResponseDTO>> getAlertsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ResponseEntity.ok(alertService.getAlertsByUser(userId, pageable));
+    }
+
+    @PatchMapping("/{id}/expire")
+    public ResponseEntity<AlertaResponseDTO> expireAlert(@PathVariable Long id) {
+        String username = getAuthenticatedUsername();
+        return ResponseEntity.ok(alertService.expireAlert(id, username));
     }
 
     /**

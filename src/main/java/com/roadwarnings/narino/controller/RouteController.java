@@ -1,6 +1,7 @@
 package com.roadwarnings.narino.controller;
 
 import com.roadwarnings.narino.dto.request.RouteRequestDTO;
+import com.roadwarnings.narino.dto.response.AlertaResponseDTO;
 import com.roadwarnings.narino.dto.response.RouteResponseDTO;
 import com.roadwarnings.narino.service.RouteService;
 import jakarta.validation.Valid;
@@ -87,5 +88,20 @@ public class RouteController {
             @PathVariable Long id,
             @RequestParam Integer count) {
         return ResponseEntity.ok(routeService.updateActiveAlertsCount(id, count));
+    }
+
+    @GetMapping("/nearby")
+    public ResponseEntity<List<RouteResponseDTO>> getNearbyRoutes(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(defaultValue = "10.0") Double radius) {
+        return ResponseEntity.ok(routeService.getNearbyRoutes(latitude, longitude, radius));
+    }
+
+    @GetMapping("/{id}/alerts")
+    public ResponseEntity<List<AlertaResponseDTO>> getAlertsForRoute(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "10.0") Double radius) {
+        return ResponseEntity.ok(routeService.getAlertsForRoute(id, radius));
     }
 }
