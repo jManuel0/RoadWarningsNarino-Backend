@@ -3,6 +3,7 @@ package com.roadwarnings.narino.controller;
 import com.roadwarnings.narino.dto.request.AlertReportRequestDTO;
 import com.roadwarnings.narino.dto.response.AlertReportResponseDTO;
 import com.roadwarnings.narino.service.AlertReportService;
+import com.roadwarnings.narino.util.AuthenticationUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,8 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,12 +23,13 @@ import java.util.List;
 public class AlertReportController {
 
     private final AlertReportService alertReportService;
+    private final AuthenticationUtil authenticationUtil;
 
     @PostMapping
     public ResponseEntity<AlertReportResponseDTO> createReport(
             @Valid @RequestBody AlertReportRequestDTO request) {
 
-        String username = getAuthenticatedUsername();
+        String username = authenticationUtil.getAuthenticatedUsername();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(alertReportService.createReport(username, request));
     }
@@ -74,8 +74,8 @@ public class AlertReportController {
 
     @GetMapping("/my-reports")
     public ResponseEntity<List<AlertReportResponseDTO>> getMyReports() {
-        // TODO: Implementar con userId del usuario autenticado
-        return ResponseEntity.ok(alertReportService.getReportsByUserId(1L));
+        Long userId = authenticationUtil.getAuthenticatedUserId();
+        return ResponseEntity.ok(alertReportService.getReportsByUserId(userId));
     }
 
     @PatchMapping("/{reportId}/review")
@@ -84,12 +84,7 @@ public class AlertReportController {
             @RequestParam boolean approve,
             @RequestParam(required = false) String reviewNotes) {
 
-        String username = getAuthenticatedUsername();
+        String username = authenticationUtil.getAuthenticatedUsername();
         return ResponseEntity.ok(alertReportService.reviewReport(reportId, username, approve, reviewNotes));
-    }
-
-    private String getAuthenticatedUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
     }
 }
