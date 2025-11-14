@@ -3,6 +3,8 @@ package com.roadwarnings.narino.repository;
 import com.roadwarnings.narino.entity.Alert;
 import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.enums.AlertType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +17,8 @@ import java.util.List;
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
     List<Alert> findByStatus(AlertStatus status);
+
+    Page<Alert> findByStatus(AlertStatus status, Pageable pageable);
 
     List<Alert> findByType(AlertType type);
 

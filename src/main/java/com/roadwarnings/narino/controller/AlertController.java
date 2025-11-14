@@ -6,8 +6,14 @@ import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.service.AlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,12 +26,11 @@ public class AlertController {
 
     private final AlertService alertService;
 
-    // 🔹 Crear alerta (por ahora usando usuario "system")
     @PostMapping
     public ResponseEntity<AlertaResponseDTO> createAlert(
             @Valid @RequestBody AlertaRequestDTO request) {
 
-        String username = "system"; // TODO: reemplazar cuando tengamos login
+        String username = getAuthenticatedUsername();
         AlertaResponseDTO response = alertService.createAlert(request, username);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -36,10 +41,36 @@ public class AlertController {
         return ResponseEntity.ok(alertService.getAllAlerts());
     }
 
+    // 🔹 Obtener todas las alertas paginadas
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<AlertaResponseDTO>> getAllAlertsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ResponseEntity.ok(alertService.getAllAlertsPaginated(pageable));
+    }
+
     // 🔹 Solo activas
     @GetMapping("/active")
     public ResponseEntity<List<AlertaResponseDTO>> getActiveAlerts() {
         return ResponseEntity.ok(alertService.getActiveAlerts());
+    }
+
+    // 🔹 Solo activas paginadas
+    @GetMapping("/active/paginated")
+    public ResponseEntity<Page<AlertaResponseDTO>> getActiveAlertsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ResponseEntity.ok(alertService.getActiveAlertsPaginated(pageable));
     }
 
     // 🔹 Por id
@@ -57,30 +88,56 @@ public class AlertController {
         return ResponseEntity.ok(alertService.getNearbyAlerts(latitude, longitude, radius));
     }
 
-    // 🔹 Actualizar alerta (por ahora sin validar usuario real)
     @PutMapping("/{id}")
     public ResponseEntity<AlertaResponseDTO> updateAlert(
             @PathVariable Long id,
             @Valid @RequestBody AlertaRequestDTO request) {
 
-        String username = "system"; // TODO: validar contra usuario autenticado
+        String username = getAuthenticatedUsername();
         return ResponseEntity.ok(alertService.updateAlert(id, request, username));
     }
 
-    // 🔹 Eliminar alerta
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
-        String username = "system"; // TODO: validar usuario
+        String username = getAuthenticatedUsername();
         alertService.deleteAlert(id, username);
         return ResponseEntity.noContent().build();
     }
 
-    // 🔹 Cambiar estado
     @PatchMapping("/{id}/status")
     public ResponseEntity<AlertaResponseDTO> updateAlertStatus(
             @PathVariable Long id,
             @RequestParam AlertStatus status) {
         return ResponseEntity.ok(alertService.updateAlertStatus(id, status));
+    }
+
+    @PostMapping("/{id}/upvote")
+    public ResponseEntity<AlertaResponseDTO> upvoteAlert(@PathVariable Long id) {
+        return ResponseEntity.ok(alertService.upvoteAlert(id));
+    }
+
+    @PostMapping("/{id}/downvote")
+    public ResponseEntity<AlertaResponseDTO> downvoteAlert(@PathVariable Long id) {
+        return ResponseEntity.ok(alertService.downvoteAlert(id));
+    }
+
+    /**
+     * Obtiene el username del usuario autenticado desde el SecurityContext.
+     * Si no hay usuario autenticado, retorna null.
+     */
+    private String getAuthenticatedUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        // Si el principal es "anonymousUser", retornar null
+        if ("anonymousUser".equals(authentication.getPrincipal())) {
+            return null;
+        }
+
+        return authentication.getName();
     }
 }
 

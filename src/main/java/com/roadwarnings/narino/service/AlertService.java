@@ -12,6 +12,8 @@ import com.roadwarnings.narino.repository.AlertRepository;
 import com.roadwarnings.narino.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,10 +91,20 @@ public class AlertService {
                 .toList();
     }
 
+    public Page<AlertaResponseDTO> getAllAlertsPaginated(Pageable pageable) {
+        return alertRepository.findAll(pageable)
+                .map(this::mapToResponseDTO);
+    }
+
     public List<AlertaResponseDTO> getActiveAlerts() {
         return alertRepository.findByStatus(AlertStatus.ACTIVE).stream()
                 .map(this::mapToResponseDTO)
                 .toList();
+    }
+
+    public Page<AlertaResponseDTO> getActiveAlertsPaginated(Pageable pageable) {
+        return alertRepository.findByStatus(AlertStatus.ACTIVE, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     public AlertaResponseDTO getAlertById(Long id) {
@@ -168,6 +180,28 @@ public class AlertService {
         alert.setStatus(status);
         alert = alertRepository.save(alert);
 
+        return mapToResponseDTO(alert);
+    }
+
+    public AlertaResponseDTO upvoteAlert(Long id) {
+        Alert alert = alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
+
+        alert.setUpvotes(alert.getUpvotes() + 1);
+        alert = alertRepository.save(alert);
+
+        log.info("Alerta {} recibió upvote. Total: {}", id, alert.getUpvotes());
+        return mapToResponseDTO(alert);
+    }
+
+    public AlertaResponseDTO downvoteAlert(Long id) {
+        Alert alert = alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
+
+        alert.setDownvotes(alert.getDownvotes() + 1);
+        alert = alertRepository.save(alert);
+
+        log.info("Alerta {} recibió downvote. Total: {}", id, alert.getDownvotes());
         return mapToResponseDTO(alert);
     }
 

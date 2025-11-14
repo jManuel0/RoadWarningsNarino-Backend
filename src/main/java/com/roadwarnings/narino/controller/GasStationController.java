@@ -4,6 +4,10 @@ import com.roadwarnings.narino.dto.request.GasStationRequestDTO;
 import com.roadwarnings.narino.dto.response.GasStationResponseDTO;
 import com.roadwarnings.narino.service.GasStationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +30,18 @@ public class GasStationController {
     @GetMapping
     public ResponseEntity<List<GasStationResponseDTO>> getAll() {
         return ResponseEntity.ok(gasStationService.getAllGasStations());
+    }
+
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<GasStationResponseDTO>> getAllPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        return ResponseEntity.ok(gasStationService.getAllGasStationsPaginated(pageable));
     }
 
     @GetMapping("/{id}")

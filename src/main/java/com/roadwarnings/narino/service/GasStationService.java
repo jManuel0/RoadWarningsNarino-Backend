@@ -7,6 +7,8 @@ import com.roadwarnings.narino.exception.ResourceNotFoundException;
 import com.roadwarnings.narino.repository.GasStationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,6 +54,11 @@ public class GasStationService {
         return gasStationRepository.findAll().stream()
                 .map(this::mapToResponseDTO)
                 .toList();
+    }
+
+    public Page<GasStationResponseDTO> getAllGasStationsPaginated(Pageable pageable) {
+        return gasStationRepository.findAll(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     public GasStationResponseDTO getGasStationById(Long id) {

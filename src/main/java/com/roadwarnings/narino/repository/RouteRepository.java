@@ -1,6 +1,8 @@
 package com.roadwarnings.narino.repository;
 
 import com.roadwarnings.narino.entity.Route;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,6 +11,7 @@ import java.util.List;
 @Repository
 public interface RouteRepository extends JpaRepository<Route, Long> {
     List<Route> findByIsActive(Boolean isActive);
+    Page<Route> findByIsActive(Boolean isActive, Pageable pageable);
 }
 
 
