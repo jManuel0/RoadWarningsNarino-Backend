@@ -15,12 +15,22 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+
+    public EmailService(
+            @org.springframework.beans.factory.annotation.Autowired(required = false) JavaMailSender mailSender,
+            SpringTemplateEngine templateEngine
+    ) {
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
+        if (mailSender == null) {
+            log.warn("JavaMailSender no configurado. Los emails no serán enviados.");
+        }
+    }
 
     @Value("${spring.mail.username:noreply@roadwarnings.com}")
     private String fromEmail;
@@ -30,6 +40,10 @@ public class EmailService {
 
     @Async
     public void sendSimpleEmail(String to, String subject, String text) {
+        if (mailSender == null) {
+            log.warn("Email no enviado (JavaMailSender no configurado) - To: {}, Subject: {}", to, subject);
+            return;
+        }
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
@@ -46,6 +60,10 @@ public class EmailService {
 
     @Async
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        if (mailSender == null) {
+            log.warn("Email HTML no enviado (JavaMailSender no configurado) - To: {}, Subject: {}", to, subject);
+            return;
+        }
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
