@@ -2,9 +2,11 @@ package com.roadwarnings.narino.controller;
 
 import com.roadwarnings.narino.dto.request.AlertaRequestDTO;
 import com.roadwarnings.narino.dto.request.AlertFilterDTO;
+import com.roadwarnings.narino.dto.request.AlertSearchDTO;
 import com.roadwarnings.narino.dto.response.AlertaResponseDTO;
 import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.service.AlertService;
+import com.roadwarnings.narino.service.AlertSearchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,7 @@ import java.util.List;
 public class AlertController {
 
     private final AlertService alertService;
+    private final AlertSearchService alertSearchService;
 
     @PostMapping
     public ResponseEntity<AlertaResponseDTO> createAlert(
@@ -165,6 +168,18 @@ public class AlertController {
     public ResponseEntity<AlertaResponseDTO> expireAlert(@PathVariable Long id) {
         String username = getAuthenticatedUsername();
         return ResponseEntity.ok(alertService.expireAlert(id, username));
+    }
+
+    // ==================== BÚSQUEDA AVANZADA ====================
+
+    /**
+     * Búsqueda avanzada de alertas con múltiples filtros
+     * POST /alert/search
+     */
+    @PostMapping("/search")
+    public ResponseEntity<Page<AlertaResponseDTO>> searchAlerts(
+            @RequestBody AlertSearchDTO searchDTO) {
+        return ResponseEntity.ok(alertSearchService.searchAlerts(searchDTO));
     }
 
     /**
