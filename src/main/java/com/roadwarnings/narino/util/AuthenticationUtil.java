@@ -1,6 +1,7 @@
 package com.roadwarnings.narino.util;
 
 import com.roadwarnings.narino.entity.User;
+import com.roadwarnings.narino.enums.UserRole;
 import com.roadwarnings.narino.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -92,5 +93,51 @@ public class AuthenticationUtil {
                         "Usuario no encontrado: " + username));
 
         return user.getId();
+    }
+
+    /**
+     * Verifica si el usuario autenticado tiene un rol específico
+     * @param role rol a verificar
+     * @return true si el usuario tiene el rol, false en caso contrario
+     */
+    public boolean hasRole(UserRole role) {
+        try {
+            User user = getAuthenticatedUser();
+            return user.getRole() == role;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Verifica si el usuario autenticado es administrador
+     * @return true si es administrador, false en caso contrario
+     */
+    public boolean isAdmin() {
+        return hasRole(UserRole.ADMIN);
+    }
+
+    /**
+     * Verifica si el usuario autenticado es moderador
+     * @return true si es moderador, false en caso contrario
+     */
+    public boolean isModerator() {
+        return hasRole(UserRole.MODERATOR);
+    }
+
+    /**
+     * Verifica si el usuario autenticado es administrador o moderador
+     * @return true si es admin o moderador, false en caso contrario
+     */
+    public boolean isAdminOrModerator() {
+        return isAdmin() || isModerator();
+    }
+
+    /**
+     * Verifica si el usuario autenticado tiene autoridad especial
+     * @return true si tiene el rol AUTHORITY, false en caso contrario
+     */
+    public boolean hasAuthority() {
+        return hasRole(UserRole.AUTHORITY);
     }
 }

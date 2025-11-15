@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,11 +36,13 @@ public class AlertReportController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<List<AlertReportResponseDTO>> getAllReports() {
         return ResponseEntity.ok(alertReportService.getAllReports());
     }
 
     @GetMapping("/paginated")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<Page<AlertReportResponseDTO>> getAllReportsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -49,11 +52,13 @@ public class AlertReportController {
     }
 
     @GetMapping("/pending")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<List<AlertReportResponseDTO>> getPendingReports() {
         return ResponseEntity.ok(alertReportService.getPendingReports());
     }
 
     @GetMapping("/pending/paginated")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<Page<AlertReportResponseDTO>> getPendingReportsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -79,6 +84,7 @@ public class AlertReportController {
     }
 
     @PatchMapping("/{reportId}/review")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<AlertReportResponseDTO> reviewReport(
             @PathVariable Long reportId,
             @RequestParam boolean approve,
