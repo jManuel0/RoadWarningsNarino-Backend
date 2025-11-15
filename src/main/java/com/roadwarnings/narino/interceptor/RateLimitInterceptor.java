@@ -23,7 +23,16 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String key = getClientIdentifier(request);
-        Bucket bucket = rateLimitingConfig.resolveBucket(key);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Obtener el bucket apropiado según si el usuario está autenticado
+        Bucket bucket;
+        if (authentication != null && authentication.isAuthenticated() &&
+            !"anonymousUser".equals(authentication.getPrincipal())) {
+            bucket = rateLimitingConfig.resolveAuthenticatedUserBucket(key);
+        } else {
+            bucket = rateLimitingConfig.resolveBucket(key);
+        }
 
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 

@@ -31,6 +31,7 @@ public class CommentService {
     private final UserStatisticsService statisticsService;
     private final BadgeService badgeService;
     private final WebSocketService webSocketService;
+    private final ReputationService reputationService;
 
     private static final String COMMENT_NOT_FOUND = "Comentario no encontrado";
     private static final String ALERT_NOT_FOUND = "Alerta no encontrada";
@@ -58,6 +59,9 @@ public class CommentService {
         // Actualizar estadísticas del usuario
         statisticsService.incrementCommentPosted(user.getId());
         badgeService.checkAndAwardBadges(user.getId());
+
+        // Otorgar puntos de reputación
+        reputationService.onCommentCreated(user.getId());
 
         // Broadcast a través de WebSocket
         CommentResponseDTO response = mapToResponseDTO(comment);

@@ -25,8 +25,20 @@ public class RateLimitingConfig {
     }
 
     private Bucket createNewBucket() {
-        // Permite 20 requests por minuto
+        // Usuarios anónimos: 20 requests por minuto
         Bandwidth limit = Bandwidth.classic(20, Refill.intervally(20, Duration.ofMinutes(1)));
+        return Bucket.builder()
+                .addLimit(limit)
+                .build();
+    }
+
+    public Bucket resolveAuthenticatedUserBucket(String key) {
+        return cache.computeIfAbsent("auth_" + key, k -> createAuthenticatedUserBucket());
+    }
+
+    private Bucket createAuthenticatedUserBucket() {
+        // Usuarios autenticados: 100 requests por minuto
+        Bandwidth limit = Bandwidth.classic(100, Refill.intervally(100, Duration.ofMinutes(1)));
         return Bucket.builder()
                 .addLimit(limit)
                 .build();

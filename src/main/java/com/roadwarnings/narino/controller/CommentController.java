@@ -1,5 +1,6 @@
 package com.roadwarnings.narino.controller;
 
+import com.roadwarnings.narino.annotation.RateLimited;
 import com.roadwarnings.narino.dto.request.CommentRequestDTO;
 import com.roadwarnings.narino.dto.response.CommentResponseDTO;
 import com.roadwarnings.narino.service.CommentService;
@@ -26,6 +27,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
+    @RateLimited(RateLimited.Type.COMMENT_CREATION)
     public ResponseEntity<CommentResponseDTO> createComment(
             @Valid @RequestBody CommentRequestDTO request) {
 

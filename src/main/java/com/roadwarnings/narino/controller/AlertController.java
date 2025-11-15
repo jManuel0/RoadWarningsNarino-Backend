@@ -1,5 +1,6 @@
 package com.roadwarnings.narino.controller;
 
+import com.roadwarnings.narino.annotation.RateLimited;
 import com.roadwarnings.narino.dto.request.AlertaRequestDTO;
 import com.roadwarnings.narino.dto.request.AlertFilterDTO;
 import com.roadwarnings.narino.dto.request.AlertSearchDTO;
@@ -31,6 +32,7 @@ public class AlertController {
     private final AlertSearchService alertSearchService;
 
     @PostMapping
+    @RateLimited(RateLimited.Type.ALERT_CREATION)
     public ResponseEntity<AlertaResponseDTO> createAlert(
             @Valid @RequestBody AlertaRequestDTO request) {
 

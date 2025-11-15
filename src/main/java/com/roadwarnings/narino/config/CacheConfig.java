@@ -36,6 +36,9 @@ public class CacheConfig {
     public static final String GAS_STATIONS_NEARBY_CACHE = "gasStations:nearby";
     public static final String ROUTES_CACHE = "routes";
     public static final String LEADERBOARD_CACHE = "leaderboard";
+    public static final String WEATHER_CACHE = "weather";
+    public static final String WEATHER_FORECAST_CACHE = "weather-forecast";
+    public static final String TRAFFIC_CACHE = "traffic";
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
@@ -101,6 +104,18 @@ public class CacheConfig {
 
         // Leaderboard - TTL corto (5 minutos)
         cacheConfigurations.put(LEADERBOARD_CACHE,
+                defaultConfig.entryTtl(Duration.ofMinutes(5)));
+
+        // Clima - TTL medio (30 minutos) - los datos meteorológicos no cambian muy rápido
+        cacheConfigurations.put(WEATHER_CACHE,
+                defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Pronóstico del clima - TTL largo (1 hora)
+        cacheConfigurations.put(WEATHER_FORECAST_CACHE,
+                defaultConfig.entryTtl(Duration.ofHours(1)));
+
+        // Tráfico - TTL muy corto (5 minutos) porque las condiciones cambian rápido
+        cacheConfigurations.put(TRAFFIC_CACHE,
                 defaultConfig.entryTtl(Duration.ofMinutes(5)));
 
         return RedisCacheManager.builder(connectionFactory)

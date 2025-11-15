@@ -48,6 +48,8 @@ public class AlertService {
     private final BadgeService badgeService;
     private final RouteRepository routeRepository;
     private final FavoriteRouteRepository favoriteRouteRepository;
+    private final ReputationService reputationService;
+    private final SmartNotificationService smartNotificationService;
     private final PushNotificationService pushNotificationService;
 
     private static final String ALERT_NOT_FOUND = "Alerta no encontrada";
@@ -104,7 +106,13 @@ public class AlertService {
         if (user != null) {
             statisticsService.incrementAlertCreated(user.getId());
             badgeService.checkAndAwardBadges(user.getId());
+
+            // Otorgar puntos de reputación
+            reputationService.onAlertCreated(user.getId());
         }
+
+        // Enviar notificaciones inteligentes a usuarios con rutas favoritas
+        smartNotificationService.onNewAlert(alert);
 
         // Actualizar contador de alertas en rutas cercanas
         updateNearbyRoutesAlertCount(alert.getLatitude(), alert.getLongitude());
@@ -242,6 +250,9 @@ public class AlertService {
         if (alert.getUser() != null) {
             statisticsService.incrementUpvoteReceived(alert.getUser().getId());
             badgeService.checkAndAwardBadges(alert.getUser().getId());
+
+            // Otorgar puntos de reputación
+            reputationService.onAlertUpvoted(alert.getUser().getId());
         }
 
         // Broadcast actualización de votos a través de WebSocket
@@ -262,6 +273,9 @@ public class AlertService {
         // Actualizar estadísticas del creador de la alerta
         if (alert.getUser() != null) {
             statisticsService.incrementDownvoteReceived(alert.getUser().getId());
+
+            // Restar puntos de reputación
+            reputationService.onAlertDownvoted(alert.getUser().getId());
         }
 
         // Broadcast actualización de votos a través de WebSocket

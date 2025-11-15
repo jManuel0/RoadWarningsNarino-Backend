@@ -39,7 +39,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/h2-console/**",
+                                // Endpoints públicos para desarrollo - REMOVER EN PRODUCCIÓN
+                                "/alert/**",
+                                "/gas-station/**",
+                                "/route/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

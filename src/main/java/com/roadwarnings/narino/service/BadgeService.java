@@ -131,7 +131,7 @@ public class BadgeService {
         }
     }
 
-    private void awardBadgeIfNotExists(Long userId, BadgeType badgeType) {
+    public void awardBadgeIfNotExists(Long userId, BadgeType badgeType) {
         if (!badgeRepository.existsByUserIdAndBadgeType(userId, badgeType)) {
             awardBadge(userId, badgeType);
         }
