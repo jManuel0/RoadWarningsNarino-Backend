@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -70,12 +69,10 @@ public class SmartNotificationService {
 
         for (FavoriteRoute favoriteRoute : favoriteRoutes) {
             // Solo notificar si el usuario tiene las notificaciones activadas
-            if (Boolean.TRUE.equals(favoriteRoute.getNotificationsEnabled())) {
-                // No notificar al usuario que creó la alerta
-                if (!alert.getUser().getId().equals(favoriteRoute.getUser().getId())) {
+            if (Boolean.TRUE.equals(favoriteRoute.getNotificationsEnabled()) && !alert.getUser().getId().equals(favoriteRoute.getUser().getId())) {
                     sendRouteAlertNotification(favoriteRoute, alert);
                 }
-            }
+            
         }
     }
 
@@ -183,7 +180,8 @@ public class SmartNotificationService {
         double lenSq = C * C + D * D;
         double param = (lenSq != 0) ? (dot / lenSq) : -1;
 
-        double xx, yy;
+        double xx;
+        double  yy;
 
         if (param < 0) {
             xx = x1;

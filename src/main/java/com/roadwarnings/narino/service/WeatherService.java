@@ -33,8 +33,6 @@ public class WeatherService {
     @Value("${weather.api.url:https://api.openweathermap.org/data/2.5}")
     private String apiUrl;
 
-    private static final int CACHE_TTL_MINUTES = 30; // Cachear por 30 minutos
-
     /**
      * Obtiene el clima actual para una ubicación
      */

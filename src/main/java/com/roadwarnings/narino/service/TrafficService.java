@@ -3,7 +3,6 @@ package com.roadwarnings.narino.service;
 import com.roadwarnings.narino.entity.Alert;
 import com.roadwarnings.narino.entity.Route;
 import com.roadwarnings.narino.enums.AlertSeverity;
-import com.roadwarnings.narino.enums.AlertType;
 import com.roadwarnings.narino.repository.AlertRepository;
 import com.roadwarnings.narino.repository.RouteRepository;
 import lombok.RequiredArgsConstructor;
@@ -168,7 +167,7 @@ public class TrafficService {
             case ACCIDENTE -> 15;
             case OBRAS -> 10;
             case CONGESTION -> 8;
-            case MANIFESTACION, EVENTO -> 12;
+            case MANIFESTATION, EVENTO -> 12;
             case CIERRE_VIA -> 20;
             default -> 5;
         };
@@ -198,9 +197,8 @@ public class TrafficService {
             return "HEAVY";
         }
 
-        if (impact.getEstimatedDelayMinutes() > 5) {
-            if ("LIGHT".equals(baseLevel)) return "MODERATE";
-        }
+        if (impact.getEstimatedDelayMinutes() > 5 && "LIGHT".equals(baseLevel)) return "MODERATE";
+        
 
         return baseLevel;
     }
