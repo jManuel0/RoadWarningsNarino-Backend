@@ -16,6 +16,9 @@ import com.roadwarnings.narino.repository.RouteRepository;
 import com.roadwarnings.narino.repository.FavoriteRouteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import static com.roadwarnings.narino.config.CacheConfig.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
