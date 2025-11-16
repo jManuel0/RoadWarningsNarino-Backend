@@ -1,11 +1,18 @@
 package com.roadwarnings.narino.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import com.roadwarnings.narino.enums.AlertType;
-import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.enums.AlertSeverity;
+import com.roadwarnings.narino.enums.AlertStatus;
+import com.roadwarnings.narino.enums.AlertType;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "alerts")
@@ -69,6 +76,10 @@ public class Alert {
     private LocalDateTime updatedAt;
 
     private LocalDateTime expiresAt;
+
+    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<AlertMedia> media = new ArrayList<>();
 
     @PreUpdate
     protected void onUpdate() {

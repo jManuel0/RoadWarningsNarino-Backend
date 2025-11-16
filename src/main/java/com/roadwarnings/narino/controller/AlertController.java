@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -172,6 +173,15 @@ public class AlertController {
         return ResponseEntity.ok(alertService.expireAlert(id, username));
     }
 
+    @PostMapping("/{id}/media")
+    public ResponseEntity<AlertaResponseDTO> uploadAlertMedia(
+            @PathVariable Long id,
+            @RequestParam("files") List<MultipartFile> files) {
+
+        String username = getAuthenticatedUsername();
+        return ResponseEntity.ok(alertService.addMediaToAlert(id, files, username));
+    }
+
     // ==================== BÚSQUEDA AVANZADA ====================
 
     /**
@@ -203,4 +213,3 @@ public class AlertController {
         return authentication.getName();
     }
 }
-

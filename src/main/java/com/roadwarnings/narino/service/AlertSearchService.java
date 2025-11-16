@@ -1,6 +1,7 @@
 package com.roadwarnings.narino.service;
 
 import com.roadwarnings.narino.dto.request.AlertSearchDTO;
+import com.roadwarnings.narino.dto.response.AlertMediaDTO;
 import com.roadwarnings.narino.dto.response.AlertaResponseDTO;
 import com.roadwarnings.narino.entity.Alert;
 import com.roadwarnings.narino.repository.AlertRepository;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
@@ -208,6 +210,15 @@ public class AlertSearchService {
                 .imageUrl(alert.getImageUrl())
                 .upvotes(alert.getUpvotes())
                 .downvotes(alert.getDownvotes())
+                .media(alert.getMedia() != null ? alert.getMedia().stream()
+                        .sorted(Comparator.comparing(m -> m.getPosition() != null ? m.getPosition() : 0))
+                        .map(m -> AlertMediaDTO.builder()
+                                .id(m.getId())
+                                .url(m.getUrl())
+                                .type(m.getType())
+                                .position(m.getPosition())
+                                .build())
+                        .collect(Collectors.toList()) : null)
                 .userId(alert.getUser() != null ? alert.getUser().getId() : null)
                 .username(alert.getUser() != null ? alert.getUser().getUsername() : null)
                 .createdAt(alert.getCreatedAt())

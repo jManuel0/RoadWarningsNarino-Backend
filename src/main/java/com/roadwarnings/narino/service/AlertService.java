@@ -4,16 +4,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.roadwarnings.narino.dto.request.AlertaRequestDTO;
 import com.roadwarnings.narino.dto.request.AlertFilterDTO;
+import com.roadwarnings.narino.dto.response.AlertMediaDTO;
 import com.roadwarnings.narino.dto.response.AlertaResponseDTO;
 import com.roadwarnings.narino.entity.Alert;
+import com.roadwarnings.narino.entity.AlertMedia;
 import com.roadwarnings.narino.entity.FavoriteRoute;
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.enums.AlertStatus;
+import com.roadwarnings.narino.enums.MediaType;
 import com.roadwarnings.narino.exception.UnauthorizedException;
 import com.roadwarnings.narino.repository.AlertRepository;
-import com.roadwarnings.narino.repository.UserRepository;
-import com.roadwarnings.narino.repository.RouteRepository;
 import com.roadwarnings.narino.repository.FavoriteRouteRepository;
+import com.roadwarnings.narino.repository.RouteRepository;
+import com.roadwarnings.narino.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +26,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
@@ -46,7 +50,7 @@ public class AlertService {
     private final ReputationService reputationService;
     private final SmartNotificationService smartNotificationService;
     private final PushNotificationService pushNotificationService;
-
+    private final ImageUploadService imageUploadService;
     private static final String ALERT_NOT_FOUND = "Alerta no encontrada";
     private static final String USER_NOT_FOUND = "Usuario no encontrado";
 
@@ -441,12 +445,58 @@ public class AlertService {
                 .imageUrl(alert.getImageUrl())
                 .upvotes(alert.getUpvotes())
                 .downvotes(alert.getDownvotes())
+                .media(alert.getMedia() != null ? alert.getMedia().stream()
+                        .sorted((m1, m2) -> Integer.compare(
+                                m1.getPosition() != null ? m1.getPosition() : 0,
+                                m2.getPosition() != null ? m2.getPosition() : 0))
+                        .map(m -> AlertMediaDTO.builder()
+                                .id(m.getId())
+                                .url(m.getUrl())
+                                .type(m.getType())
+                                .position(m.getPosition())
+                                .build())
+                        .toList() : null)
                 .createdAt(alert.getCreatedAt())
                 .updatedAt(alert.getUpdatedAt())
                 .expiresAt(alert.getExpiresAt())
                 .userId(user != null ? user.getId() : null)
                 .username(user != null ? user.getUsername() : null)
                 .build();
+    }
+
+    /**
+     * Agrega archivos multimedia (imágenes/video) a una alerta existente.
+     */
+    public AlertaResponseDTO addMediaToAlert(Long alertId, List<MultipartFile> files, String username) {
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
+
+        validateOwnership(alert, username);
+
+        int startPosition = alert.getMedia() != null ? alert.getMedia().size() : 0;
+
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+
+            try {
+                var upload = imageUploadService.uploadImage(file, "alerts/" + alertId);
+
+                AlertMedia media = AlertMedia.builder()
+                        .alert(alert)
+                        .url(upload.getUrl())
+                        .publicId(upload.getPublicId())
+                        .type(MediaType.IMAGE)
+                        .position(startPosition + i)
+                        .build();
+
+                alert.getMedia().add(media);
+            } catch (Exception e) {
+                log.error("Error subiendo archivo multimedia para alerta {}: {}", alertId, e.getMessage());
+            }
+        }
+
+        Alert saved = alertRepository.save(alert);
+        return mapToResponseDTO(saved);
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

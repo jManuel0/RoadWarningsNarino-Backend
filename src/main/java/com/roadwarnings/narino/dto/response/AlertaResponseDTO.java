@@ -1,8 +1,8 @@
 package com.roadwarnings.narino.dto.response;
 
-import com.roadwarnings.narino.enums.AlertType;
-import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.enums.AlertSeverity;
+import com.roadwarnings.narino.enums.AlertStatus;
+import com.roadwarnings.narino.enums.AlertType;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -31,6 +31,8 @@ public class AlertaResponseDTO {
     private String imageUrl;
     private Integer upvotes;
     private Integer downvotes;
+
+    private List<AlertMediaDTO> media;
 
     private Integer estimatedDuration;
     private List<String> affectedRoads;
