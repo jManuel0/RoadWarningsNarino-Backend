@@ -5,6 +5,7 @@ import com.roadwarnings.narino.dto.auth.LoginRequest;
 import com.roadwarnings.narino.dto.auth.RegisterRequest;
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.enums.UserRole;
+import com.roadwarnings.narino.exception.BadRequestException;
 import com.roadwarnings.narino.repository.UserRepository;
 import com.roadwarnings.narino.security.JwtService;
 import jakarta.validation.Valid;
@@ -31,10 +32,10 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
 
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().build();
+            throw new BadRequestException("El username ya est\u00e1 en uso");
         }
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().build();
+            throw new BadRequestException("El email ya est\u00e1 registrado");
         }
 
         User user = User.builder()
