@@ -133,14 +133,12 @@ public class PushNotificationService {
                                 token, exception.getMessage());
 
                         // Si el token es inválido, desactivarlo
-                        if (exception instanceof FirebaseMessagingException) {
-                            FirebaseMessagingException fme = (FirebaseMessagingException) exception;
-                            if ("invalid-registration-token".equals(fme.getErrorCode()) ||
-                                "registration-token-not-registered".equals(fme.getErrorCode())) {
+                        if (exception instanceof FirebaseMessagingException fme && ("invalid-registration-token".equals(fme.getErrorCode()) ||
+                                "registration-token-not-registered".equals(fme.getErrorCode()))) {
                                 deviceTokenRepository.deactivateToken(token);
                                 log.info("Token inválido desactivado: {}", token);
                             }
-                        }
+                        
                     }
                 }
             }

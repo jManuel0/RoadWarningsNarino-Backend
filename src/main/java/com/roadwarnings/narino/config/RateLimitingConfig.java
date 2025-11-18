@@ -16,7 +16,7 @@ public class RateLimitingConfig {
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
     @Bean
-    public Map<String, Bucket> rateLimitBucketCache() {
+    Map<String, Bucket> rateLimitBucketCache() {
         return cache;
     }
 

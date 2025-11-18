@@ -41,7 +41,7 @@ public class CacheConfig {
     public static final String TRAFFIC_CACHE = "traffic";
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         // Configurar ObjectMapper para serialización JSON
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());

@@ -3,7 +3,10 @@ package com.roadwarnings.narino.dto.request;
 import com.roadwarnings.narino.enums.AlertType;
 import com.roadwarnings.narino.enums.AlertSeverity;
 import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 

@@ -162,7 +162,7 @@ public class ReputationService {
                 userId,
                 NotificationType.REPUTATION_MILESTONE,
                 "¡Subiste de nivel!",
-                String.format("¡Felicidades! Has alcanzado el nivel %d", newLevel),
+                "¡Felicidades! Has alcanzado el nivel %d".formatted(newLevel),
                 Long.valueOf(newLevel)
         );
 

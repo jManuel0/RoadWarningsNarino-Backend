@@ -176,7 +176,7 @@ public class AlertController {
     @PostMapping("/{id}/media")
     public ResponseEntity<AlertaResponseDTO> uploadAlertMedia(
             @PathVariable Long id,
-            @RequestParam("files") List<MultipartFile> files) {
+            @RequestParam List<MultipartFile> files) {
 
         String username = getAuthenticatedUsername();
         return ResponseEntity.ok(alertService.addMediaToAlert(id, files, username));

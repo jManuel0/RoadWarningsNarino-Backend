@@ -42,7 +42,7 @@ public class RateLimitAspect {
 
             throw new ResponseStatusException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    String.format("Has excedido el límite de %s. Intenta de nuevo en %d segundos.",
+                    "Has excedido el límite de %s. Intenta de nuevo en %d segundos.".formatted(
                             getActionName(rateLimited.value()), waitSeconds)
             );
         }

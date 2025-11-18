@@ -121,13 +121,19 @@ public class EmailService {
     @Async
     public void sendAlertNotificationEmail(String to, String username, String alertTitle, String alertLocation) {
         String subject = "Nueva alerta cerca de tu ruta - " + appName;
-        String text = String.format(
-                "Hola %s,\n\n" +
-                "Se ha reportado una nueva alerta cerca de una de tus rutas favoritas:\n\n" +
-                "Título: %s\n" +
-                "Ubicación: %s\n\n" +
-                "Visita la app para más detalles.\n\n" +
-                "Saludos,\n%s",
+        String text = (
+                """
+                Hola %s,
+                
+                Se ha reportado una nueva alerta cerca de una de tus rutas favoritas:
+                
+                Título: %s
+                Ubicación: %s
+                
+                Visita la app para más detalles.
+                
+                Saludos,
+                %s""").formatted(
                 username, alertTitle, alertLocation, appName
         );
 
@@ -137,12 +143,18 @@ public class EmailService {
     @Async
     public void sendAlertResolvedEmail(String to, String username, String alertTitle) {
         String subject = "Alerta resuelta - " + appName;
-        String text = String.format(
-                "Hola %s,\n\n" +
-                "La siguiente alerta ha sido marcada como resuelta:\n\n" +
-                "Título: %s\n\n" +
-                "Gracias por tu contribución a la comunidad.\n\n" +
-                "Saludos,\n%s",
+        String text = (
+                """
+                Hola %s,
+                
+                La siguiente alerta ha sido marcada como resuelta:
+                
+                Título: %s
+                
+                Gracias por tu contribución a la comunidad.
+                
+                Saludos,
+                %s""").formatted(
                 username, alertTitle, appName
         );
 
@@ -152,12 +164,18 @@ public class EmailService {
     @Async
     public void sendBadgeEarnedEmail(String to, String username, String badgeName, String badgeDescription) {
         String subject = "¡Nuevo logro desbloqueado! - " + appName;
-        String text = String.format(
-                "¡Felicidades %s!\n\n" +
-                "Has desbloqueado un nuevo logro:\n\n" +
-                "%s: %s\n\n" +
-                "Sigue contribuyendo a la comunidad para ganar más logros.\n\n" +
-                "Saludos,\n%s",
+        String text = (
+                """
+                ¡Felicidades %s!
+                
+                Has desbloqueado un nuevo logro:
+                
+                %s: %s
+                
+                Sigue contribuyendo a la comunidad para ganar más logros.
+                
+                Saludos,
+                %s""").formatted(
                 username, badgeName, badgeDescription, appName
         );
 

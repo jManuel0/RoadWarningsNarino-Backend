@@ -3,7 +3,10 @@ package com.roadwarnings.narino.dto.response;
 import com.roadwarnings.narino.enums.AlertSeverity;
 import com.roadwarnings.narino.enums.AlertStatus;
 import com.roadwarnings.narino.enums.AlertType;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;

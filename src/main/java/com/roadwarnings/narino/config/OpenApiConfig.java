@@ -17,7 +17,7 @@ import java.util.List;
 public class OpenApiConfig {
 
     @Bean
-    public OpenAPI roadWarningsOpenAPI() {
+    OpenAPI roadWarningsOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("RoadWarnings Nariño API")

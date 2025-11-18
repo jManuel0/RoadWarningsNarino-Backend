@@ -20,8 +20,8 @@ public class ImageUploadController {
 
     @PostMapping("/upload")
     public ResponseEntity<ImageUploadResponseDTO> uploadImage(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "folder", defaultValue = "road-warnings") String folder) {
+            @RequestParam MultipartFile file,
+            @RequestParam(defaultValue = "road-warnings") String folder) {
 
         try {
             if (file.isEmpty()) {
@@ -39,7 +39,7 @@ public class ImageUploadController {
     @PostMapping("/upload/base64")
     public ResponseEntity<ImageUploadResponseDTO> uploadBase64Image(
             @RequestBody String base64Image,
-            @RequestParam(value = "folder", defaultValue = "road-warnings") String folder) {
+            @RequestParam(defaultValue = "road-warnings") String folder) {
 
         try {
             ImageUploadResponseDTO response = imageUploadService.uploadBase64Image(base64Image, folder);
