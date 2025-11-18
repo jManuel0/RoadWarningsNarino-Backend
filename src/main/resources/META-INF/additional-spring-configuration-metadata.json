@@ -38,5 +38,20 @@
     "name": "app.jwt.expiration-ms",
     "type": "java.lang.String",
     "description": "A description for 'app.jwt.expiration-ms'"
+  },
+  {
+    "name": "weather.api.key",
+    "type": "java.lang.String",
+    "description": "A description for 'weather.api.key'"
+  },
+  {
+    "name": "weather.api.url",
+    "type": "java.lang.String",
+    "description": "A description for 'weather.api.url'"
+  },
+  {
+    "name": "weather.api.url",
+    "type": "java.lang.String",
+    "description": "A description for 'weather.api.url'"
   }
 ]}
