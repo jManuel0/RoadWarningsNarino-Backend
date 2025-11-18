@@ -11,12 +11,12 @@ public class RoadWarningsNarinoApplication {
     public static void main(String[] args) {
         SpringApplication.run(RoadWarningsNarinoApplication.class, args);
 
-        log.info("\n╔═══════════════════════════════════════════════════════════╗");
-        log.info("║          ROADWARNINGS NARIÑO - BACKEND API                ║");
-        log.info("║  🚀 Servidor iniciado correctamente                       ║");
-        log.info("║  📡 API: http://localhost:8080/api                        ║");
-        log.info("║  📚 Swagger: http://localhost:8080/swagger-ui.html         ║");
-        log.info("║  🗄️  H2 Console: http://localhost:8080/h2-console          ║");
-        log.info("╚═══════════════════════════════════════════════════════════╝\n");
+        log.info("\n╔═══════════════════════════════════════════════════════════ ╗");
+        log.info("║          ROADWARNINGS NARIÑO - BACKEND API                   ║");
+        log.info("║  🚀 Servidor iniciado correctamente                          ║");
+        log.info("║  📡 API: http://localhost:8080/api                           ║");
+        log.info("║  📚 Swagger: http://localhost:8080/api/swagger-ui/index.html ║");
+        log.info("║  🗄️  H2 Console: http://localhost:8080/h2-console            ║");
+        log.info("╚═══════════════════════════════════════════════════════════   ╝\n");
     }
 }
