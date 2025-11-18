@@ -1,8 +1,10 @@
 package com.roadwarnings.narino.dto.request;
 
-import com.roadwarnings.narino.enums.AlertType;
 import com.roadwarnings.narino.enums.AlertSeverity;
-import jakarta.validation.constraints.*;
+import com.roadwarnings.narino.enums.AlertType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,12 +25,15 @@ public class AlertaRequestDTO {
     @Size(min = 3, max = 100, message = "El título debe tener entre 3 y 100 caracteres")
     private String title;
 
+    @NotBlank(message = "La descripción es obligatoria")
     @Size(max = 1000, message = "La descripción no puede exceder 1000 caracteres")
     private String description;
 
     // Coordenadas (pueden venir del mapa o calcularse desde location)
+    @NotNull(message = "La latitud es obligatoria")
     private Double latitude;
 
+    @NotNull(message = "La longitud es obligatoria")
     private Double longitude;
 
     // Dirección textual (Ej: "Pasto, Calle 18 con Cra 25")
@@ -38,6 +43,7 @@ public class AlertaRequestDTO {
     private String municipality;
 
     // Severidad (CRITICA, ALTA, MEDIA, BAJA)
+    @NotNull(message = "La severidad es obligatoria")
     private AlertSeverity severity;
 
     // URL opcional de imagen
@@ -49,3 +55,4 @@ public class AlertaRequestDTO {
     // Lista de vías afectadas (opcional)
     private List<String> affectedRoads;
 }
+

@@ -101,11 +101,13 @@
 
 
         <!-- Base de datos -->
-        <dependency>
+                <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>42.7.5</version>   <!-- usa aquí la versión segura que te sugiera el plugin -->
             <scope>runtime</scope>
         </dependency>
+
 
         <!-- H2 solo para desarrollo/pruebas si lo necesitas -->
         <dependency>

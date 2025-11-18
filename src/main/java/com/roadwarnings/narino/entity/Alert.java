@@ -34,7 +34,7 @@ public class Alert {
     @Column(nullable = false)
     private String title;
 
-    @Column(length = 1000)
+    @Column(nullable = false, length = 1000)
     private String description;
 
     @Column(nullable = false)
@@ -44,6 +44,8 @@ public class Alert {
     private Double longitude;
 
     private String location;
+
+    private String municipality;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -60,6 +62,16 @@ public class Alert {
     private User user;
 
     private String imageUrl;
+
+    // Duración estimada en minutos (opcional)
+    private Integer estimatedDuration;
+
+    // Lista de vías afectadas (opcional)
+    @ElementCollection
+    @CollectionTable(name = "alert_affected_roads", joinColumns = @JoinColumn(name = "alert_id"))
+    @Column(name = "road")
+    @Builder.Default
+    private List<String> affectedRoads = new ArrayList<>();
 
     @Column(nullable = false)
     @Builder.Default  // ← AGREGADO

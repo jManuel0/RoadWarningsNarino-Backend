@@ -85,16 +85,34 @@ public class AlertService {
             }
         }
 
+        String location = normalizeOptionalText(request.getLocation());
+        String municipality = normalizeOptionalText(request.getMunicipality());
+
+        if (location == null && municipality == null && lat != null && lon != null) {
+            ReverseGeocodeResult reverse = reverseGeocode();
+            if (reverse != null) {
+                if (location == null) {
+                    location = reverse.location();
+                }
+                if (municipality == null) {
+                    municipality = reverse.municipality();
+                }
+            }
+        }
+
         Alert alert = Alert.builder()
                 .type(request.getType())
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .latitude(lat)
                 .longitude(lon)
-                .location(request.getLocation())
+                .location(location)
+                .municipality(municipality)
                 .severity(request.getSeverity())
                 .status(AlertStatus.ACTIVE)
                 .imageUrl(request.getImageUrl())
+                .estimatedDuration(request.getEstimatedDuration())
+                .affectedRoads(request.getAffectedRoads())
                 .user(user)
                 .build();
 
@@ -124,6 +142,11 @@ public class AlertService {
         webSocketService.broadcastNewAlert(response);
 
         return response;
+    }
+
+    private ReverseGeocodeResult reverseGeocode() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'reverseGeocode'");
     }
 
     public List<AlertaResponseDTO> getAllAlerts() {
@@ -429,6 +452,10 @@ public class AlertService {
         return existing.orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
     }
 
+    private String normalizeOptionalText(String value) {
+        return (value == null || value.isBlank()) ? null : value;
+    }
+
     private AlertaResponseDTO mapToResponseDTO(Alert alert) {
         User user = alert.getUser();
 
@@ -440,9 +467,12 @@ public class AlertService {
                 .latitude(alert.getLatitude())
                 .longitude(alert.getLongitude())
                 .location(alert.getLocation())
+                .municipality(alert.getMunicipality())
                 .severity(alert.getSeverity())
                 .status(alert.getStatus())
                 .imageUrl(alert.getImageUrl())
+                .estimatedDuration(alert.getEstimatedDuration())
+                .affectedRoads(alert.getAffectedRoads())
                 .upvotes(alert.getUpvotes())
                 .downvotes(alert.getDownvotes())
                 .media(alert.getMedia() != null ? alert.getMedia().stream()
