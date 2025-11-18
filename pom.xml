@@ -104,7 +104,7 @@
                 <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>   <!-- usa aquí la versión segura que te sugiera el plugin -->
+            <version>42.7.7</version>   <!-- usa aquí la versión segura que te sugiera el plugin -->
             <scope>runtime</scope>
         </dependency>
 
