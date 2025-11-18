@@ -33,7 +33,14 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Preflight CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Endpoints GET que aun así deben ir autenticados
+                        .requestMatchers(HttpMethod.GET, "/alert/my-alerts").authenticated()
+                        .requestMatchers("/api/favorites/**").authenticated()
+
+                        // Endpoints abiertos (independiente del método)
                         .requestMatchers(
                                 "/auth/**",
                                 "/public/**",
@@ -44,11 +51,28 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/actuator/health",
                                 "/h2-console/**",
-                                // Endpoints públicos para desarrollo - REMOVER EN PRODUCCIÓN
-                                "/alert/**",
-                                "/gas-station/**",
-                                "/route/**"
+                                "/api/public/**"
                         ).permitAll()
+
+                        // Lectura pública (solo GET) de datos
+                        .requestMatchers(HttpMethod.GET,
+                                // Alertas de tráfico abiertas a invitados
+                                "/alert/**",
+                                "/api/alert/**",
+
+                                // Datos de rutas y gasolineras
+                                "/api/routes/**",
+                                "/api/gas-stations/**",
+
+                                // Clima y tráfico
+                                "/api/weather/**",
+                                "/api/traffic/**",
+
+                                // Comentarios públicos de alertas
+                                "/api/comments/**"
+                        ).permitAll()
+
+                        // Todo lo demás requiere autenticación (JWT válido)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -66,3 +90,4 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 }
+
