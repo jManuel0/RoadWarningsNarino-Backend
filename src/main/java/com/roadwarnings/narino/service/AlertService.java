@@ -89,7 +89,7 @@ public class AlertService {
         String municipality = normalizeOptionalText(request.getMunicipality());
 
         if (location == null && municipality == null && lat != null && lon != null) {
-            ReverseGeocodeResult reverse = reverseGeocode();
+            ReverseGeocodeResult reverse = reverseGeocode(lat, lon);
             if (reverse != null) {
                 if (location == null) {
                     location = reverse.location();
@@ -142,11 +142,6 @@ public class AlertService {
         webSocketService.broadcastNewAlert(response);
 
         return response;
-    }
-
-    private ReverseGeocodeResult reverseGeocode() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'reverseGeocode'");
     }
 
     public List<AlertaResponseDTO> getAllAlerts() {
@@ -454,6 +449,68 @@ public class AlertService {
 
     private String normalizeOptionalText(String value) {
         return (value == null || value.isBlank()) ? null : value;
+    }
+
+    private ReverseGeocodeResult reverseGeocode(double latitude, double longitude) {
+        try {
+            String url = UriComponentsBuilder
+                    .fromHttpUrl("https://nominatim.openstreetmap.org/reverse")
+                    .queryParam("format", "json")
+                    .queryParam("lat", latitude)
+                    .queryParam("lon", longitude)
+                    .queryParam("zoom", 14)
+                    .queryParam("addressdetails", 1)
+                    .toUriString();
+
+            RestTemplate restTemplate = new RestTemplate();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "roadwarnings-narino/1.0");
+
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    String.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                log.warn("Reverse geocoding respondió con código no exitoso: {}", response.getStatusCode());
+                return null;
+            }
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+
+            String displayName = root.hasNonNull("display_name") ? root.get("display_name").asText() : null;
+            String municipality = null;
+
+            if (root.has("address")) {
+                JsonNode addr = root.get("address");
+                if (addr.hasNonNull("city")) {
+                    municipality = addr.get("city").asText();
+                } else if (addr.hasNonNull("town")) {
+                    municipality = addr.get("town").asText();
+                } else if (addr.hasNonNull("village")) {
+                    municipality = addr.get("village").asText();
+                } else if (addr.hasNonNull("municipality")) {
+                    municipality = addr.get("municipality").asText();
+                } else if (addr.hasNonNull("county")) {
+                    municipality = addr.get("county").asText();
+                }
+            }
+
+            if (displayName == null && municipality == null) {
+                return null;
+            }
+
+            return new ReverseGeocodeResult(displayName, municipality);
+
+        } catch (Exception e) {
+            log.error("Error en reverse geocoding para {}, {}: {}", latitude, longitude, e.getMessage());
+            return null;
+        }
     }
 
     private AlertaResponseDTO mapToResponseDTO(Alert alert) {

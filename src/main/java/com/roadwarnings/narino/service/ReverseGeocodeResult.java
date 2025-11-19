@@ -1,15 +1,10 @@
 package com.roadwarnings.narino.service;
 
-public class ReverseGeocodeResult {
-
-    public String location() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'location'");
-    }
-
-    public String municipality() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'municipality'");
-    }
-
+/**
+ * Resultado simplificado de reverse geocoding:
+ * location: texto descriptivo de dirección (display_name).
+ * municipality: ciudad/municipio/zona.
+ */
+public record ReverseGeocodeResult(String location, String municipality) {
 }
+

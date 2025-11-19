@@ -7,5 +7,6 @@
     "cSpell.words": [
         "narino",
         "Roadwarnins"
-    ]
+    ],
+    "java.debug.settings.onBuildFailureProceed": true
 }
