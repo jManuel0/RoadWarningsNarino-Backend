@@ -43,6 +43,7 @@ public class SecurityConfig {
                         // Endpoints abiertos (independiente del método)
                         .requestMatchers(
                                 "/auth/**",
+                                "/api/auth/**",
                                 "/public/**",
                                 "/ping",
                                 "/",
