@@ -34,7 +34,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Preflight CORS
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
 
                         // Endpoints GET que aun así deben ir autenticados
                         .requestMatchers(HttpMethod.GET, "/alert/my-alerts").authenticated()
@@ -90,4 +90,3 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 }
-
