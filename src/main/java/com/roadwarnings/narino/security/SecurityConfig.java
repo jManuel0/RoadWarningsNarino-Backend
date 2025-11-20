@@ -27,18 +27,14 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Preflight CORS
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-
-                        // Endpoints GET que aun así deben ir autenticados
-                        .requestMatchers(HttpMethod.GET, "/alert/my-alerts").authenticated()
-                        .requestMatchers("/api/favorites/**").authenticated()
+                        // Preflight CORS - DEBE IR PRIMERO
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Endpoints abiertos (independiente del método)
                         .requestMatchers(
@@ -54,6 +50,10 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/api/public/**"
                         ).permitAll()
+
+                        // Endpoints GET que aun así deben ir autenticados
+                        .requestMatchers(HttpMethod.GET, "/alert/my-alerts").authenticated()
+                        .requestMatchers("/api/favorites/**").authenticated()
 
                         // Lectura pública (solo GET) de datos
                         .requestMatchers(HttpMethod.GET,
