@@ -1,0 +1,96 @@
+services:
+  - type: web
+    name: roadwarnings-narino-backend
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/roadwarnings-narino-backend-0.0.1-SNAPSHOT.jar
+    envVars:
+      # Database Configuration (usa tu base de datos PostgreSQL de Render)
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      # Pool de conexiones
+      - key: DB_POOL_SIZE
+        value: 10
+      - key: DB_POOL_MIN_IDLE
+        value: 5
+      - key: DB_CONNECTION_TIMEOUT
+        value: 30000
+      - key: DB_IDLE_TIMEOUT
+        value: 600000
+      - key: DB_MAX_LIFETIME
+        value: 1800000
+
+      # JPA Configuration
+      - key: JPA_DDL_AUTO
+        value: update
+      - key: JPA_SHOW_SQL
+        value: false
+      - key: JPA_FORMAT_SQL
+        value: false
+
+      # JWT Configuration
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: 86400000
+      - key: JWT_REFRESH_EXPIRATION
+        value: 604800000
+
+      # Authentication - IMPORTANTE: Deshabilitado para permitir registro sin verificación
+      - key: APP_AUTH_REQUIRE_EMAIL_VERIFICATION
+        value: false
+
+      # Redis Configuration (opcional)
+      - key: REDIS_HOST
+        value: localhost
+      - key: REDIS_PORT
+        value: 6379
+      - key: REDIS_PASSWORD
+        value: ""
+      - key: REDIS_TIMEOUT
+        value: 2000
+      - key: CACHE_TTL
+        value: 600000
+
+      # Logging
+      - key: LOG_LEVEL_ROOT
+        value: INFO
+      - key: LOG_LEVEL_APP
+        value: INFO
+      - key: LOG_LEVEL_WEB
+        value: WARN
+      - key: LOG_LEVEL_HIBERNATE
+        value: WARN
+
+      # Swagger
+      - key: SWAGGER_ENABLED
+        value: true
+
+      # File Upload
+      - key: MAX_FILE_SIZE
+        value: 5MB
+      - key: MAX_REQUEST_SIZE
+        value: 10MB
+
+      # Server Port (Render asigna automáticamente)
+      - key: PORT
+        value: 8080
+
+      # Frontend URL
+      - key: FRONTEND_URL
+        value: https://road-warnings-narino-frontend.vercel.app
+
+      # Email Configuration (opcional - configura si quieres emails)
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
