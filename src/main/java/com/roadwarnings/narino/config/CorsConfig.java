@@ -14,18 +14,20 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
+        // Permitir todos los subdominios de Vercel y desarrollo local
         config.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173",
-                "https://road-warnings-narino-frontend.vercel.app",
-                "https://road-warnings-narino-frontend-*.vercel.app",
-                "https://*-jmanuel0s-projects.vercel.app"
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://*.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);
+        source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
 }
