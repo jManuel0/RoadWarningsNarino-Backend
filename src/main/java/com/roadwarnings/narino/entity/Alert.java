@@ -67,7 +67,7 @@ public class Alert {
     private Integer estimatedDuration;
 
     // Lista de vías afectadas (opcional)
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "alert_affected_roads", joinColumns = @JoinColumn(name = "alert_id"))
     @Column(name = "road")
     @Builder.Default
@@ -89,7 +89,7 @@ public class Alert {
 
     private LocalDateTime expiresAt;
 
-    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<AlertMedia> media = new ArrayList<>();
 
