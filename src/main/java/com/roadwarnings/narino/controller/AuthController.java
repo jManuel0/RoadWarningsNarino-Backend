@@ -2,8 +2,10 @@ package com.roadwarnings.narino.controller;
 
 import com.roadwarnings.narino.dto.auth.AuthResponse;
 import com.roadwarnings.narino.dto.auth.LoginRequest;
+import com.roadwarnings.narino.dto.auth.RefreshTokenRequest;
 import com.roadwarnings.narino.dto.auth.RegisterRequest;
 import com.roadwarnings.narino.entity.EmailVerificationToken;
+import com.roadwarnings.narino.entity.RefreshToken;
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.enums.UserRole;
 import com.roadwarnings.narino.exception.BadRequestException;
@@ -11,6 +13,7 @@ import com.roadwarnings.narino.repository.EmailVerificationTokenRepository;
 import com.roadwarnings.narino.repository.UserRepository;
 import com.roadwarnings.narino.security.JwtService;
 import com.roadwarnings.narino.service.EmailService;
+import com.roadwarnings.narino.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,9 +37,13 @@ public class AuthController {
     private final JwtService jwtService;
     private final EmailService emailService;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.frontend.url:http://localhost:4200}")
     private String frontendBaseUrl;
+
+    @Value("${jwt.expiration:3600000}")
+    private Long jwtExpirationMs;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -83,7 +90,14 @@ public class AuthController {
         emailService.sendSimpleEmail(user.getEmail(), subject, body);
 
         String token = jwtService.generateToken(user.getUsername());
-        return ResponseEntity.ok(new AuthResponse(token));
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
+
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken.getToken())
+                .expiresIn(jwtExpirationMs / 1000) // Convertir a segundos
+                .username(user.getUsername())
+                .build());
     }
 
     @PostMapping("/login")
@@ -107,7 +121,39 @@ public class AuthController {
         );
 
         String token = jwtService.generateToken(auth.getName());
-        return ResponseEntity.ok(new AuthResponse(token));
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(auth.getName());
+
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken.getToken())
+                .expiresIn(jwtExpirationMs / 1000) // Convertir a segundos
+                .username(auth.getName())
+                .build());
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        String requestRefreshToken = request.getRefreshToken();
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String token = jwtService.generateToken(user.getUsername());
+                    return ResponseEntity.ok(AuthResponse.builder()
+                            .token(token)
+                            .refreshToken(requestRefreshToken)
+                            .expiresIn(jwtExpirationMs / 1000)
+                            .username(user.getUsername())
+                            .build());
+                })
+                .orElseThrow(() -> new BadRequestException("Refresh token inválido"));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        refreshTokenService.revokeToken(request.getRefreshToken());
+        return ResponseEntity.ok("Sesión cerrada correctamente");
     }
 
     @GetMapping("/verify-email")
