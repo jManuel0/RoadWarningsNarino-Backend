@@ -42,6 +42,9 @@ public class AuthController {
     @Value("${app.frontend.url:http://localhost:4200}")
     private String frontendBaseUrl;
 
+    @Value("${app.auth.require-email-verification:true}")
+    private boolean requireEmailVerification;
+
     @Value("${jwt.expiration:3600000}")
     private Long jwtExpirationMs;
 
@@ -61,33 +64,35 @@ public class AuthController {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(UserRole.USER)
                 .isActive(true)
-                .emailVerified(false)
+                .emailVerified(!requireEmailVerification)
                 .build();
 
         userRepository.save(user);
 
-        EmailVerificationToken verificationToken =
-                EmailVerificationToken.createFor(user, 24);
-        emailVerificationTokenRepository.save(verificationToken);
+        if (requireEmailVerification) {
+            EmailVerificationToken verificationToken =
+                    EmailVerificationToken.createFor(user, 24);
+            emailVerificationTokenRepository.save(verificationToken);
 
-        String verificationLink = frontendBaseUrl + "/verify-email?token=" + verificationToken.getToken();
-        String subject = "Verifica tu correo electrónico";
-        String body = """
-                Hola %s,
-                
-                Gracias por registrarte en RoadWarnings Nariño.
-                
-                Por favor verifica tu correo haciendo clic en el siguiente enlace:
-                
-                %s
-                
-                Este enlace expira en 24 horas.
-                
-                Saludos,
-                El equipo de RoadWarnings Nariño
-                """.formatted(user.getUsername(), verificationLink);
+            String verificationLink = frontendBaseUrl + "/verify-email?token=" + verificationToken.getToken();
+            String subject = "Verifica tu correo electrónico";
+            String body = """
+                    Hola %s,
+                    
+                    Gracias por registrarte en RoadWarnings Nariño.
+                    
+                    Por favor verifica tu correo haciendo clic en el siguiente enlace:
+                    
+                    %s
+                    
+                    Este enlace expira en 24 horas.
+                    
+                    Saludos,
+                    El equipo de RoadWarnings Nariño
+                    """.formatted(user.getUsername(), verificationLink);
 
-        emailService.sendSimpleEmail(user.getEmail(), subject, body);
+            emailService.sendSimpleEmail(user.getEmail(), subject, body);
+        }
 
         String token = jwtService.generateToken(user.getUsername());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
@@ -112,7 +117,7 @@ public class AuthController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+        if (requireEmailVerification && !Boolean.TRUE.equals(user.getEmailVerified())) {
             throw new BadRequestException("Debes verificar tu correo electrónico antes de iniciar sesión.");
         }
 
