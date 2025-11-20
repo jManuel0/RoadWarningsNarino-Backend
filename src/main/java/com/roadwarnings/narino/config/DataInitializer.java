@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
-@Component
+// @Component  // Deshabilitado - no queremos datos de prueba en producción
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
