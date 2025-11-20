@@ -17,7 +17,8 @@ public class CorsConfig {
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
                 "https://road-warnings-narino-frontend.vercel.app",
-                "https://road-warnings-narino-frontend-*.vercel.app"
+                "https://road-warnings-narino-frontend-*.vercel.app",
+                "https://*-jmanuel0s-projects.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
