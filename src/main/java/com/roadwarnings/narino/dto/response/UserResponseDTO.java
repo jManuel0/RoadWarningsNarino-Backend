@@ -20,5 +20,6 @@ public class UserResponseDTO {
     private UserRole role;
     private Boolean isActive;
     private String preferredTheme;
+    private String profilePicture;
     private LocalDateTime createdAt;
 }

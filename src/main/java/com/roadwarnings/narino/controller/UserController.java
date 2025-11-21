@@ -9,11 +9,14 @@ import com.roadwarnings.narino.service.PasswordResetService;
 import com.roadwarnings.narino.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -87,6 +90,19 @@ public class UserController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
         passwordResetService.resetPassword(request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/me/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponseDTO> uploadProfilePicture(
+            @RequestParam("file") MultipartFile file) throws IOException {
+        String username = getAuthenticatedUsername();
+        return ResponseEntity.ok(userService.uploadProfilePicture(username, file));
+    }
+
+    @DeleteMapping("/me/profile-picture")
+    public ResponseEntity<UserResponseDTO> deleteProfilePicture() {
+        String username = getAuthenticatedUsername();
+        return ResponseEntity.ok(userService.deleteProfilePicture(username));
     }
 
     private String getAuthenticatedUsername() {

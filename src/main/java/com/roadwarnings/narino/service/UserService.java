@@ -1,6 +1,7 @@
 package com.roadwarnings.narino.service;
 
 import com.roadwarnings.narino.dto.request.UserUpdateRequestDTO;
+import com.roadwarnings.narino.dto.response.ImageUploadResponseDTO;
 import com.roadwarnings.narino.dto.response.UserResponseDTO;
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.exception.ResourceNotFoundException;
@@ -11,7 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +26,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ImageUploadService imageUploadService;
 
     private static final String USER_NOT_FOUND = "Usuario no encontrado";
 
@@ -104,6 +108,59 @@ public class UserService {
         log.info("Usuario {} desactivado", user.getUsername());
     }
 
+    public UserResponseDTO uploadProfilePicture(String username, MultipartFile file) throws IOException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("El archivo está vacío");
+        }
+
+        if (!file.getContentType().startsWith("image/")) {
+            throw new IllegalArgumentException("El archivo debe ser una imagen");
+        }
+
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("La imagen no debe superar los 5MB");
+        }
+
+        if (user.getProfilePicture() != null) {
+            String oldPublicId = imageUploadService.extractPublicIdFromUrl(user.getProfilePicture());
+            if (oldPublicId != null) {
+                imageUploadService.deleteImage(oldPublicId);
+            }
+        }
+
+        ImageUploadResponseDTO uploadResponse = imageUploadService.uploadImage(file, "profile-pictures");
+        user.setProfilePicture(uploadResponse.getUrl());
+        userRepository.save(user);
+
+        log.info("Foto de perfil actualizada para usuario: {}", username);
+
+        return mapToResponseDTO(user);
+    }
+
+    public UserResponseDTO deleteProfilePicture(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+
+        if (user.getProfilePicture() == null) {
+            throw new IllegalArgumentException("El usuario no tiene foto de perfil");
+        }
+
+        String publicId = imageUploadService.extractPublicIdFromUrl(user.getProfilePicture());
+        if (publicId != null) {
+            imageUploadService.deleteImage(publicId);
+        }
+
+        user.setProfilePicture(null);
+        userRepository.save(user);
+
+        log.info("Foto de perfil eliminada para usuario: {}", username);
+
+        return mapToResponseDTO(user);
+    }
+
     private UserResponseDTO mapToResponseDTO(User user) {
         return UserResponseDTO.builder()
                 .id(user.getId())
@@ -112,6 +169,7 @@ public class UserService {
                 .role(user.getRole())
                 .isActive(user.getIsActive())
                 .preferredTheme(user.getPreferredTheme())
+                .profilePicture(user.getProfilePicture())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

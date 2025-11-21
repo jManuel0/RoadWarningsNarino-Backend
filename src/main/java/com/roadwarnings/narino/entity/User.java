@@ -43,6 +43,9 @@ public class User {
     @Builder.Default
     private String preferredTheme = "light";
 
+    @Column(name = "profile_picture")
+    private String profilePicture;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
