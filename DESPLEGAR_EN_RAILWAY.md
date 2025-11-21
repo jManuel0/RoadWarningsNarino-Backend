@@ -12,7 +12,7 @@
 
 ## Paso 1: Crear Cuenta en Railway
 
-1. Ve a: https://railway.app/
+1. Ve a: <https://railway.app/>
 2. Haz clic en **Login** (arriba derecha)
 3. Selecciona **Login with GitHub**
 4. Autoriza a Railway para acceder a tus repositorios
@@ -62,7 +62,7 @@ Railway comenzará a analizar tu proyecto.
 2. Ve a la pestaña **Variables**
 3. Haz clic en **New Variable** y agrega estas variables **UNA POR UNA**:
 
-### Variables Obligatorias:
+### Variables Obligatorias
 
 ```bash
 # Database (Railway conecta automáticamente si usas ${{Postgres.xxx}})
@@ -104,6 +104,7 @@ Railway te da la URL en formato `postgres://...`, pero Java Spring Boot necesita
 Railway puede hacer la conversión automática usando `${{Postgres.DATABASE_URL}}`, pero si no funciona, conviértela manualmente:
 
 **Ejemplo:**
+
 ```
 # Railway te da:
 postgres://postgres:password@containers-us-west-123.railway.app:5432/railway
@@ -174,9 +175,11 @@ Debería devolver un array de alertas (o vacío `[]` si limpiaste los datos).
 3. **Settings** → **Environment Variables**
 4. Busca la variable `VITE_API_URL` (o `NEXT_PUBLIC_API_URL`)
 5. **Edítala** y cambia el valor a:
+
    ```
    https://TU-URL-DE-RAILWAY.up.railway.app/api
    ```
+
 6. Haz clic en **Save**
 7. Ve a **Deployments** → Redeploy
 
@@ -184,7 +187,7 @@ Debería devolver un array de alertas (o vacío `[]` si limpiaste los datos).
 
 ## Paso 11: Verificar que Todo Funciona
 
-1. Abre: https://road-warnings-narino-frontend.vercel.app
+1. Abre: <https://road-warnings-narino-frontend.vercel.app>
 2. Abre la consola del navegador (F12) → **Network**
 3. Intenta registrar un usuario
 4. Verifica que la petición vaya a: `https://TU-URL-DE-RAILWAY.up.railway.app/api/auth/register`
@@ -200,6 +203,7 @@ Si quieres limpiar los datos de prueba:
 2. Ve a la pestaña **Data**
 3. Haz clic en **Query**
 4. Ejecuta:
+
    ```sql
    DELETE FROM alerts;
    DELETE FROM gas_stations;
