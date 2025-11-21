@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/actuator/health",
                                 "/h2-console/**",
-                                "/api/public/**"
+                                "/api/public/**",
+                                "/admin/db-fix/**"
                         ).permitAll()
 
                         // Permitir creación de alertas sin autenticación
