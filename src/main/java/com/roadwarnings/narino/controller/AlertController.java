@@ -105,9 +105,16 @@ public class AlertController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
+    public ResponseEntity<?> deleteAlert(@PathVariable Long id) {
         String username = getAuthenticatedUsername();
-        alertService.deleteAlert(id, username);
+        
+        // Si no hay usuario autenticado, denegar
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Debes iniciar sesión para eliminar alertas");
+        }
+        
+        alertService.deleteAlertFlexible(id, username);
         return ResponseEntity.noContent().build();
     }
 

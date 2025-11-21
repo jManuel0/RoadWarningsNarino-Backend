@@ -240,6 +240,33 @@ public class AlertService {
         webSocketService.broadcastAlertDeletion(id);
     }
 
+    /**
+     * Eliminar alerta con lógica flexible:
+     * - Permite eliminar alertas sin usuario (userId = null)
+     * - Permite eliminar alertas propias
+     */
+    public void deleteAlertFlexible(Long id, String username) {
+        Alert alert = alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
+
+        // Si la alerta no tiene usuario, cualquiera puede eliminarla
+        if (alert.getUser() == null) {
+            alertRepository.delete(alert);
+            webSocketService.broadcastAlertDeletion(id);
+            log.info("Alerta {} sin usuario eliminada por {}", id, username);
+            return;
+        }
+
+        // Si tiene usuario, validar que sea el dueño
+        if (!alert.getUser().getUsername().equals(username)) {
+            throw new UnauthorizedException("No tienes permiso para eliminar esta alerta");
+        }
+
+        alertRepository.delete(alert);
+        webSocketService.broadcastAlertDeletion(id);
+        log.info("Alerta {} eliminada por su creador {}", id, username);
+    }
+
     public AlertaResponseDTO updateAlertStatus(Long id, AlertStatus status) {
         Alert alert = alertRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(ALERT_NOT_FOUND));
