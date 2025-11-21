@@ -51,6 +51,9 @@ public class SecurityConfig {
                                 "/api/public/**"
                         ).permitAll()
 
+                        // Permitir creación de alertas sin autenticación
+                        .requestMatchers(HttpMethod.POST, "/alert").permitAll()
+
                         // Endpoints GET que aun así deben ir autenticados
                         .requestMatchers(HttpMethod.GET, "/alert/my-alerts").authenticated()
                         .requestMatchers("/api/favorites/**").authenticated()
