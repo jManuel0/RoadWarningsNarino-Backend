@@ -171,7 +171,6 @@ public class AdminController {
         try {
             // Contar datos antes de eliminar
             long alertsCount = alertRepository.count();
-            long usersCount = userRepository.count();
             long gasStationsCount = gasStationRepository.count();
             long routesCount = routeRepository.count();
 
