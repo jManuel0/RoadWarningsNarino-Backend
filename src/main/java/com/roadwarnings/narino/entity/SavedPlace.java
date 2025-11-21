@@ -31,10 +31,10 @@ public class SavedPlace {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String address;
 
-    @Column(nullable = false, precision = 10, scale = 8)
+    @Column(nullable = false)
     private Double latitude;
 
-    @Column(nullable = false, precision = 11, scale = 8)
+    @Column(nullable = false)
     private Double longitude;
 
     @Enumerated(EnumType.STRING)
