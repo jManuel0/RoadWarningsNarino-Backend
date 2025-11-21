@@ -58,7 +58,7 @@ public class Alert {
     private AlertStatus status = AlertStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     private String imageUrl;
