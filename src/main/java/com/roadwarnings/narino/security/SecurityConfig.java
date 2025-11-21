@@ -65,7 +65,6 @@ public class SecurityConfig {
                                 "/api/alert/**",
 
                                 // Datos de rutas y gasolineras
-                                "/api/routes/**",
                                 "/api/gas-stations/**",
 
                                 // Clima y tráfico
@@ -73,8 +72,17 @@ public class SecurityConfig {
                                 "/api/traffic/**",
 
                                 // Comentarios públicos de alertas
-                                "/api/comments/**"
+                                "/api/comments/**",
+
+                                // Búsqueda de lugares (público)
+                                "/places/**"
                         ).permitAll()
+
+                        // Cálculo de rutas (público POST)
+                        .requestMatchers(HttpMethod.POST, "/routes/calculate").permitAll()
+
+                        // Lugares guardados (requiere autenticación)
+                        .requestMatchers("/users/*/saved-places/**").authenticated()
 
                         // Todo lo demás requiere autenticación (JWT válido)
                         .anyRequest().authenticated()
