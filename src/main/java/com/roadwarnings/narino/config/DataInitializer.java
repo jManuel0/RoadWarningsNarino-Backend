@@ -6,8 +6,6 @@ import com.roadwarnings.narino.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 
 // @Component  // Deshabilitado - no queremos datos de prueba en producción
