@@ -3,8 +3,9 @@ package com.roadwarnings.narino.controller;
 import com.roadwarnings.narino.dto.response.UserResponseDTO;
 import com.roadwarnings.narino.entity.User;
 import com.roadwarnings.narino.enums.UserRole;
-import com.roadwarnings.narino.repository.UserRepository;
+import com.roadwarnings.narino.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +26,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @PreAuthorize("hasRole('ADMIN')")
+@Slf4j
 public class AdminController {
 
     private final UserRepository userRepository;
+    private final AlertRepository alertRepository;
+    private final GasStationRepository gasStationRepository;
+    private final RouteRepository routeRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     /**
      * Obtiene todos los usuarios del sistema (paginado)
@@ -144,9 +150,119 @@ public class AdminController {
                 .adminCount(adminCount)
                 .moderatorCount(moderatorCount)
                 .regularUserCount(regularUsers)
+                .totalAlerts(alertRepository.count())
+                .totalGasStations(gasStationRepository.count())
+                .totalRoutes(routeRepository.count())
                 .build();
 
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Limpia los datos de prueba de la base de datos
+     * DELETE /api/admin/clear-test-data
+     */
+    @DeleteMapping("/clear-test-data")
+    public ResponseEntity<java.util.Map<String, Object>> clearTestData() {
+        log.warn("⚠️ Limpiando datos de prueba de la base de datos...");
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+
+        try {
+            // Contar datos antes de eliminar
+            long alertsCount = alertRepository.count();
+            long usersCount = userRepository.count();
+            long gasStationsCount = gasStationRepository.count();
+            long routesCount = routeRepository.count();
+
+            // Eliminar todas las alertas
+            alertRepository.deleteAll();
+            log.info("🗑️ Eliminadas {} alertas", alertsCount);
+
+            // Eliminar usuarios de prueba específicos
+            userRepository.findByUsername("admin").ifPresent(userRepository::delete);
+            userRepository.findByUsername("moderador").ifPresent(userRepository::delete);
+            userRepository.findByUsername("juan_pasto").ifPresent(userRepository::delete);
+            log.info("🗑️ Eliminados usuarios de prueba");
+
+            // Eliminar estaciones de gasolina
+            gasStationRepository.deleteAll();
+            log.info("🗑️ Eliminadas {} estaciones de gasolina", gasStationsCount);
+
+            // Eliminar rutas
+            routeRepository.deleteAll();
+            log.info("🗑️ Eliminadas {} rutas", routesCount);
+
+            // Limpiar refresh tokens huérfanos
+            refreshTokenRepository.deleteAll();
+            log.info("🗑️ Limpiados refresh tokens");
+
+            result.put("success", true);
+            result.put("message", "Datos de prueba eliminados exitosamente");
+            result.put("deleted", java.util.Map.of(
+                "alerts", alertsCount,
+                "users", "admin, moderador, juan_pasto",
+                "gasStations", gasStationsCount,
+                "routes", routesCount
+            ));
+            result.put("remaining", java.util.Map.of(
+                "alerts", alertRepository.count(),
+                "users", userRepository.count(),
+                "gasStations", gasStationRepository.count(),
+                "routes", routeRepository.count()
+            ));
+
+            log.info("✅ Limpieza completada exitosamente");
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("❌ Error al limpiar datos: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            return ResponseEntity.internalServerError().body(result);
+        }
+    }
+
+    /**
+     * Elimina TODOS los datos de la base de datos (usar con precaución)
+     * DELETE /api/admin/clear-all
+     */
+    @DeleteMapping("/clear-all")
+    public ResponseEntity<java.util.Map<String, Object>> clearAllData() {
+        log.warn("⚠️⚠️⚠️ LIMPIANDO TODA LA BASE DE DATOS...");
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+
+        try {
+            long alertsCount = alertRepository.count();
+            long usersCount = userRepository.count();
+            long gasStationsCount = gasStationRepository.count();
+            long routesCount = routeRepository.count();
+
+            alertRepository.deleteAll();
+            userRepository.deleteAll();
+            gasStationRepository.deleteAll();
+            routeRepository.deleteAll();
+            refreshTokenRepository.deleteAll();
+
+            result.put("success", true);
+            result.put("message", "TODA la base de datos ha sido limpiada");
+            result.put("deleted", java.util.Map.of(
+                "alerts", alertsCount,
+                "users", usersCount,
+                "gasStations", gasStationsCount,
+                "routes", routesCount
+            ));
+
+            log.info("✅ Base de datos completamente limpiada");
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("❌ Error al limpiar base de datos: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            return ResponseEntity.internalServerError().body(result);
+        }
     }
 
     // ==================== DTOs ====================
@@ -172,5 +288,8 @@ public class AdminController {
         private Long adminCount;
         private Long moderatorCount;
         private Long regularUserCount;
+        private Long totalAlerts;
+        private Long totalGasStations;
+        private Long totalRoutes;
     }
 }
